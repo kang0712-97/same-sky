@@ -1,6 +1,6 @@
 (function () {
   const BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
-  const A = window.SS_ASSETS, Geo = window.SSGeo, Av = window.SSAvatar, Remote = window.SSApi;
+  const A = window.SS_ASSETS, Geo = window.SSGeo, Av = window.SSAvatar, Remote = window.SSApi, Globe = window.SSGlobe;
   const $ = id => document.getElementById(id);
   const KEY = 'samesky.v2', LKEY = 'samesky.v2.local';
   const KL = { night: '맑음 · 밤', clear: '맑음', cloudy: '흐림', rain: '비', sunset: '노을', snow: '눈' };
@@ -22,7 +22,7 @@
 
   /* ---------- 저장소: 서버(Supabase) 또는 이 기기(체험) ---------- */
   const localApi = {
-    async getCouple() { return { exists: true, members: [{ slot: S.slot, ...S.me }, DEMO_PARTNER] }; },
+    async getCouple() { return { exists: true, members: [{ slot: S.slot, ...S.me }, S.demoPartner || DEMO_PARTNER] }; },
     async saveMember() { },
     async addPhoto(code, slot, p) {
       if (L.photos.filter(x => x.slot === slot && x.local_date === p.date).length >= 3) { const e = new Error('limit'); e.code = 'limit'; throw e; }
@@ -72,7 +72,17 @@
     $('goTown').disabled = !pt;
     const d = $('desk'); d.style.setProperty('--l', A.sky[W.me.kind][0]); d.style.setProperty('--r', A.sky[W.pt.kind][0]);
     SIDES.forEach(s => { const pf = $('pf-' + s), pr = person(s) && person(s).profile; pf.hidden = !pr; if (pr) pf.src = pr; });
-    paintTown(); paintStrip(); photoBtn();
+    paintTown(); paintStrip(); photoBtn(); paintRoute();
+  }
+  // 지구본 + "서울 ━ 뉴욕 · 거리 · 시차" 요약
+  function paintRoute() {
+    const a = S.me.city, b = D.partner && D.partner.city;
+    Globe.set(a, b);
+    if (!b) { $('route').textContent = a.name + ' · 상대를 기다리는 중'; $('rg-sum').textContent = ''; return; }
+    const df = Math.abs(off(a.tz) - off(b.tz)), dtxt = df === 0 ? '시차 없음' : '시차 ' + (Number.isInteger(df) ? df : df.toFixed(1)) + '시간';
+    const txt = a.name + ' ━ ' + b.name + ' · ' + Globe.km(a, b).toLocaleString() + 'km · ' + dtxt;
+    $('route').textContent = txt;
+    $('rg-sum').textContent = txt + ' · ' + KL[W.me.kind] + ' ' + W.me.temp + '° ↔ ' + KL[W.pt.kind] + ' ' + W.pt.temp + '°';
   }
 
   /* ---------- 시계 ---------- */
@@ -343,7 +353,42 @@
     }
     $('editMe').hidden = false; $('demo').hidden = false; $('codeBtn').hidden = S.mode === 'local';
     $('codeBtn').textContent = '코드 ' + S.code;
-    view('v-home'); paint(); clock(); refresh(false).then(real);
+    showRegions(); view('v-home'); paint(); clock(); refresh(false).then(real);
+  }
+
+  /* ---------- 체험: 두 사람의 지역을 각각 바꿔 보기 ---------- */
+  function partnerOf() { return S.demoPartner || (S.demoPartner = JSON.parse(JSON.stringify(DEMO_PARTNER))); }
+  function showRegions() {
+    const on = S.mode === 'local'; $('regions').hidden = !on; if (!on) return;
+    SIDES.forEach(s => {
+      const c = (s === 'me' ? S.me : partnerOf()).city;
+      $('rg-country-' + s).value = c.cc; $('rg-city-' + s).value = c.isCapital === false ? c.name : ''; $('rg-list-' + s).innerHTML = '';
+    });
+  }
+  async function setRegion(side, city) {
+    if (side === 'me') S.me.city = city; else partnerOf().city = city;
+    save(); await refresh(false); real();
+  }
+  function initRegions() {
+    SIDES.forEach(s => {
+      const sel = $('rg-country-' + s), inp = $('rg-city-' + s), list = $('rg-list-' + s);
+      Geo.COUNTRIES.forEach(c => { const o = document.createElement('option'); o.value = c.cc; o.textContent = c.name; sel.appendChild(o); });
+      sel.addEventListener('change', () => { inp.value = ''; list.innerHTML = ''; setRegion(s, { ...Geo.capitalOf(sel.value), isCapital: true }); });
+      let t = 0;
+      inp.addEventListener('input', () => {
+        clearTimeout(t); const q = inp.value.trim();
+        if (!q) { list.innerHTML = ''; return; }
+        t = setTimeout(async () => {
+          list.textContent = '검색 중…';
+          const r = await Geo.search(sel.value, q);
+          if (inp.value.trim() !== q) return;
+          list.innerHTML = '';
+          if (!r.length) { list.textContent = '"' + q + '"이(가) 포함된 도시를 찾지 못했어요. 영어 이름도 써 보세요.'; return; }
+          r.forEach(c => { const b = document.createElement('button'); b.type = 'button'; b.className = 'city'; b.textContent = c.label; b.onclick = () => { inp.value = c.name; list.innerHTML = ''; setRegion(s, { name: c.name, country: c.country, cc: c.cc, lat: c.lat, lon: c.lon, tz: c.tz, isCapital: false }); }; list.appendChild(b); });
+        }, 250);
+      });
+      enterKey(inp, () => { const f = list.querySelector('.city'); if (f) f.click(); });
+    });
   }
 
   /* ---------- 이벤트 ---------- */
@@ -381,7 +426,7 @@
   });
 
   /* ---------- 시작 ---------- */
-  let g = 0; setInterval(() => { g = (g + 1) % A.globe.length; $('globe').src = A.globe[g]; }, 350); $('globe').src = A.globe[0];
+  Globe.attach($('globe')); initRegions();
   setInterval(clock, 1000);
   setInterval(() => { if (S && S.code) refresh(true); }, 25000);
   setInterval(() => { if (S) real(); }, 10 * 60 * 1000);

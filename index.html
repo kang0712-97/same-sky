@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-<div class="title"><h1>SAME SKY</h1><p>다른 곳에 있어도, 같은 하늘 아래.</p></div>
+<div class="title"><h1>SAME SKY</h1></div>
 
 <div class="desk" id="desk">
  <div class="ss">
@@ -87,8 +87,9 @@
    </div>
    <div class="strip" id="strip"></div>
    <div class="foot">
-    <img id="globe" alt="" style="width:130px;image-rendering:pixelated" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
+    <canvas id="globe" width="81" height="81" style="width:130px;image-rendering:pixelated" aria-label="두 도시를 잇는 지구본"></canvas>
     <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px">
+     <div style="font-size:13px;font-weight:bold" id="route"></div>
      <div style="font-size:13px" id="moonTxt"></div>
      <div class="btns"><button class="btn p" id="goTown">▶ 상대 동네 가보기</button><button class="btn" id="photo">▣ 오늘의 사진 보내기 (0/3)</button></div>
      <div class="btns"><button class="btn" id="goPhotos">사진함</button><button class="btn" id="goNotes">쪽지함</button></div>
@@ -141,10 +142,18 @@
  <button id="real">실제 날씨 불러오기</button><button id="reset">처음부터 다시</button><span id="status"></span>
 </div>
 
+<div class="demo regions" id="regions" hidden>
+ <b>체험하기 — 두 사람의 지역을 골라 보세요</b>
+ <div class="rg"><span class="rl">나</span><select id="rg-country-me" aria-label="나의 나라"></select><input id="rg-city-me" placeholder="도시 (선택, 비우면 수도)" aria-label="나의 도시"><div class="cities" id="rg-list-me"></div></div>
+ <div class="rg"><span class="rl">상대</span><select id="rg-country-pt" aria-label="상대의 나라"></select><input id="rg-city-pt" placeholder="도시 (선택, 비우면 수도)" aria-label="상대의 도시"><div class="cities" id="rg-list-pt"></div></div>
+ <div class="rgsum" id="rg-sum"></div>
+</div>
+
 <script src="src/config.js"></script>
 <script src="src/assets.js"></script>
 <script src="src/dotify.js"></script>
 <script src="src/geo.js"></script>
+<script src="src/globe.js"></script>
 <script src="src/avatar.js"></script>
 <script src="src/api.js"></script>
 <script src="src/app.js"></script>
