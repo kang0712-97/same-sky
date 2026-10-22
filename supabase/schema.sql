@@ -1,0 +1,111 @@
+-- Same Sky — Supabase 스키마 (SQL Editor에 통째로 붙여넣고 Run)
+-- 보안 방식: 테이블은 anon 접근 완전 차단(RLS, 정책 없음). 모든 접근은 "커플 코드"를 아는 사람만 호출하는 RPC 함수로만 가능.
+
+create table if not exists ss_couples (
+  code text primary key,
+  created_at timestamptz not null default now()
+);
+create table if not exists ss_members (
+  code text not null references ss_couples(code) on delete cascade,
+  slot text not null check (slot in ('a','b')),
+  name text not null check (char_length(name) <= 20),
+  avatar jsonb not null,
+  city jsonb not null,
+  profile text,
+  updated_at timestamptz not null default now(),
+  primary key (code, slot)
+);
+create table if not exists ss_photos (
+  id uuid primary key default gen_random_uuid(),
+  code text not null references ss_couples(code) on delete cascade,
+  slot text not null check (slot in ('a','b')),
+  local_date text not null,
+  caption text not null default '',
+  weather text not null default '',
+  data text not null,
+  taken_at timestamptz not null default now()
+);
+create index if not exists ss_photos_code_time on ss_photos(code, taken_at desc);
+create table if not exists ss_notes (
+  id uuid primary key default gen_random_uuid(),
+  code text not null references ss_couples(code) on delete cascade,
+  slot text not null check (slot in ('a','b')),      -- 쓴 사람
+  body text not null check (char_length(body) between 1 and 60),
+  x real not null default 50,
+  y real not null default 85,
+  created_at timestamptz not null default now()
+);
+create index if not exists ss_notes_code_time on ss_notes(code, created_at desc);
+
+alter table ss_couples enable row level security;
+alter table ss_members enable row level security;
+alter table ss_photos  enable row level security;
+alter table ss_notes   enable row level security;
+revoke all on ss_couples, ss_members, ss_photos, ss_notes from anon, authenticated;
+
+create or replace function ss_create_couple() returns text
+language plpgsql security definer set search_path = public as $$
+declare c text;
+begin
+  loop
+    c := upper(substr(md5(gen_random_uuid()::text), 1, 6));
+    exit when not exists (select 1 from ss_couples where code = c);
+  end loop;
+  insert into ss_couples(code) values (c);
+  return c;
+end $$;
+
+create or replace function ss_get_couple(p_code text) returns json
+language sql security definer set search_path = public as $$
+  select case when exists (select 1 from ss_couples where code = upper(p_code)) then
+    json_build_object('exists', true, 'members',
+      coalesce((select json_agg(json_build_object('slot', slot, 'name', name, 'avatar', avatar, 'city', city, 'profile', profile)) from ss_members where code = upper(p_code)), '[]'::json))
+  else json_build_object('exists', false, 'members', '[]'::json) end;
+$$;
+
+create or replace function ss_save_member(p_code text, p_slot text, p_name text, p_avatar jsonb, p_city jsonb, p_profile text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from ss_couples where code = upper(p_code)) then raise exception 'no_couple'; end if;
+  insert into ss_members(code, slot, name, avatar, city, profile) values (upper(p_code), p_slot, p_name, p_avatar, p_city, p_profile)
+  on conflict (code, slot) do update set name = excluded.name, avatar = excluded.avatar, city = excluded.city, profile = excluded.profile, updated_at = now();
+end $$;
+
+create or replace function ss_add_photo(p_code text, p_slot text, p_local_date text, p_caption text, p_weather text, p_data text) returns uuid
+language plpgsql security definer set search_path = public as $$
+declare n int; new_id uuid;
+begin
+  if not exists (select 1 from ss_couples where code = upper(p_code)) then raise exception 'no_couple'; end if;
+  if length(p_data) > 700000 then raise exception 'too_big'; end if;
+  select count(*) into n from ss_photos where code = upper(p_code) and slot = p_slot and local_date = p_local_date;
+  if n >= 3 then raise exception 'limit'; end if;
+  insert into ss_photos(code, slot, local_date, caption, weather, data) values (upper(p_code), p_slot, p_local_date, left(p_caption, 40), left(p_weather, 40), p_data) returning id into new_id;
+  return new_id;
+end $$;
+
+create or replace function ss_list_photos(p_code text, p_limit int default 60) returns json
+language sql security definer set search_path = public as $$
+  select coalesce(json_agg(t), '[]'::json) from (
+    select id, slot, local_date, caption, weather, data, taken_at from ss_photos
+    where code = upper(p_code) order by taken_at desc limit least(p_limit, 120)
+  ) t;
+$$;
+
+create or replace function ss_add_note(p_code text, p_slot text, p_body text, p_x real, p_y real) returns uuid
+language plpgsql security definer set search_path = public as $$
+declare new_id uuid;
+begin
+  if not exists (select 1 from ss_couples where code = upper(p_code)) then raise exception 'no_couple'; end if;
+  insert into ss_notes(code, slot, body, x, y) values (upper(p_code), p_slot, left(p_body, 60), p_x, p_y) returning id into new_id;
+  return new_id;
+end $$;
+
+create or replace function ss_list_notes(p_code text) returns json
+language sql security definer set search_path = public as $$
+  select coalesce(json_agg(t), '[]'::json) from (
+    select id, slot, body, x, y, created_at from ss_notes where code = upper(p_code) order by created_at desc limit 300
+  ) t;
+$$;
+
+grant execute on function ss_create_couple(), ss_get_couple(text), ss_save_member(text,text,text,jsonb,jsonb,text),
+  ss_add_photo(text,text,text,text,text,text), ss_list_photos(text,int), ss_add_note(text,text,text,real,real), ss_list_notes(text) to anon;

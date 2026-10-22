@@ -1,0 +1,14 @@
+{
+  "characters": [
+    { "id": "girl", "name": "교복 소녀", "file": "girl.png",
+      "parts": {
+        "hair":   { "colors": ["#262425", "#1e1c1d", "#171718"], "rows": [0, 0.66] },
+        "top":    { "colors": ["#f9ebdb", "#faefdf"], "rows": [0.28, 0.62] },
+        "bottom": { "colors": ["#364c4f"], "rows": [0.5, 0.7] } } },
+    { "id": "boy", "name": "캡 모자 소년", "file": "boy.png",
+      "parts": {
+        "hair":   { "colors": ["#2a2d2e", "#19191a", "#121314"], "rows": [0, 0.3] },
+        "top":    { "colors": ["#384b54"], "rows": [0.26, 0.66] },
+        "bottom": { "colors": ["#c6baad", "#9c958b"], "rows": [0.6, 0.88] } } }
+  ]
+}

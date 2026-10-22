@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Same Sky · 같은 하늘</title>
-<meta name="description" content="서로 다른 하늘 아래, 하나의 하루. 장거리 연애 커플을 위한 도트 일상 공유 화면.">
+<meta name="description" content="서로 다른 하늘 아래, 하나의 하루. 장거리 연애 커플을 위한 도트 일상 공유 서비스.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
 <link rel="stylesheet" href="src/style.css">
 </head>
@@ -13,70 +13,126 @@
 
 <div class="desk" id="desk">
  <div class="ss">
-  <div class="bar"><span class="dot f"></span><span class="dot"></span><span class="dot"></span><span style="flex:1;text-align:center;letter-spacing:3px">SAME SKY</span><button class="mini" id="editMe" hidden>내 정보</button><span style="font-size:13px" id="live">…</span></div>
+  <div class="bar"><span class="dot f"></span><span class="dot"></span><span class="dot"></span><span style="flex:1;text-align:center;letter-spacing:3px">SAME SKY</span><button class="mini" id="codeBtn" hidden>코드</button><button class="mini" id="editMe" hidden>내 정보</button><span style="font-size:13px" id="live">…</span></div>
 
-  <!-- 처음 등록 -->
+  <!-- 1. 내 정보 등록 -->
   <div class="view" id="v-setup">
    <form class="setup" id="setupForm" autocomplete="off">
     <h2 id="setupTitle">먼저 내 정보를 등록해요</h2>
     <fieldset>
      <legend>나</legend>
-     <label class="fld">이름<input id="me-name" maxlength="10" placeholder="예: 유노" required></label>
+     <label class="fld">이름<input id="name" maxlength="10" placeholder="예: 유노"></label>
+
      <div class="fld">아바타
-      <div class="avs" id="me-avs"></div>
+      <div class="avbox">
+       <img id="avPrev" class="avprev" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
+       <div class="avctl">
+        <div class="avs" id="chars"></div>
+        <div id="colors">
+         <div class="crow" id="c-hair"></div><div class="crow" id="c-top"></div><div class="crow" id="c-bottom"></div>
+        </div>
+       </div>
+      </div>
       <details class="up"><summary>내 이미지로 도트 캐릭터 만들기</summary>
        <div class="upbody">
-        <label class="btn small">이미지 선택<input id="me-file" type="file" accept="image/*" hidden></label>
-        <label class="inl"><input type="radio" name="me-mode" value="full" checked> 전신 캐릭터</label>
-        <label class="inl"><input type="radio" name="me-mode" value="face"> 얼굴 프로필</label>
+        <label class="btn small">이미지 선택<input id="file" type="file" accept="image/*" hidden></label>
+        <label class="inl"><input type="radio" name="mode" value="full" checked> 전신 캐릭터</label>
+        <label class="inl"><input type="radio" name="mode" value="face"> 얼굴 프로필</label>
         <div class="hint">전신은 AI로 만든 캐릭터 이미지(단색 배경)가 잘 나와요. 얼굴 사진은 '얼굴 프로필'로 쓰세요.</div>
-        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" id="me-prev" class="prev" hidden>
+        <img id="prev" class="prev" hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
        </div>
       </details>
      </div>
-     <div class="fld">내 지역
-      <div class="srch"><input id="me-q" placeholder="도시 이름 (예: 서울, Seoul)"><button type="button" class="btn small" id="me-go">검색</button></div>
-      <div class="cities" id="me-list"></div><div class="picked" id="me-picked">아직 선택 안 함</div>
+
+     <div class="fld">내가 있는 곳
+      <div class="srch"><select id="country" aria-label="나라"></select></div>
+      <input id="city" placeholder="도시 (선택) — 글자를 포함하면 목록이 나와요. 비우면 수도" aria-label="도시">
+      <div class="cities" id="cities"></div>
+      <div class="picked" id="picked"></div>
      </div>
     </fieldset>
-    <fieldset>
-     <legend>상대</legend>
-     <label class="fld">이름<input id="pt-name" maxlength="10" placeholder="예: 무노" required></label>
-     <div class="fld">아바타<div class="avs" id="pt-avs"></div></div>
-     <div class="fld">상대 지역
-      <div class="srch"><input id="pt-q" placeholder="도시 이름 (예: 뉴욕, New York)"><button type="button" class="btn small" id="pt-go">검색</button></div>
-      <div class="cities" id="pt-list"></div><div class="picked" id="pt-picked">아직 선택 안 함</div>
-     </div>
-    </fieldset>
-    <div class="row2"><button type="button" class="btn" id="setupCancel" hidden>취소</button><button class="btn p" type="submit">시작하기</button></div>
+    <div class="row2"><button type="button" class="btn" id="setupCancel" hidden>취소</button><button class="btn p" type="submit">다음</button></div>
     <div class="err" id="setupErr"></div>
    </form>
   </div>
 
-  <!-- 홈 -->
+  <!-- 2. 커플 연결 -->
+  <div class="view" id="v-connect">
+   <div class="setup">
+    <h2>상대와 연결해요</h2>
+    <div class="hint">서로 각자의 정보만 등록하고, 아래 코드로 연결돼요.</div>
+    <fieldset>
+     <legend>내가 먼저 시작</legend>
+     <div class="hint">코드가 만들어져요. 그 코드를 상대에게 알려 주세요.</div>
+     <button class="btn p" id="cCreate" type="button">새 코드 만들기</button>
+    </fieldset>
+    <fieldset>
+     <legend>상대가 만든 코드가 있어요</legend>
+     <div class="srch"><input id="joinCode" maxlength="8" placeholder="코드 입력 (예: 3FA9C1)" style="text-transform:uppercase"><button class="btn small" id="cJoin" type="button">입장</button></div>
+     <div class="inl" id="slotRow" hidden>내 자리 <select id="slotPick"><option value="a">처음 만든 사람</option><option value="b">초대받은 사람</option></select></div>
+    </fieldset>
+    <div class="err" id="connErr"></div>
+    <div class="row2"><button class="btn" id="cBack" type="button">◀ 이전</button><button class="btn" id="cDemo" type="button">혼자 체험하기</button></div>
+   </div>
+  </div>
+
+  <!-- 3. 홈 -->
   <div class="view" id="v-home">
    <div class="twin">
     <div class="badge" id="diff">시차</div>
-    <div class="pane"><div id="st-me"></div><div class="plate"><div class="who"><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" id="pf-me" class="pf" hidden><div><b id="n-me">나</b><div class="sub"><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" id="moonIcon" style="width:15px"><span id="w-me"></span></div></div></div><div class="t" id="t-me">--:--</div></div></div>
-    <div class="pane"><div id="st-pt"></div><div class="plate"><div class="who"><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" id="pf-pt" class="pf" hidden><div><b id="n-pt">상대</b><div class="sub"><span id="w-pt"></span></div></div></div><div class="t" id="t-pt">--:--</div></div></div>
+    <div class="pane"><div id="st-me"></div><div class="plate"><div class="who"><img id="pf-me" class="pf" hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><div><b id="n-me">나</b><div class="sub"><img id="moonIcon" alt="" style="width:15px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><span id="w-me"></span></div></div></div><div class="t" id="t-me">--:--</div></div></div>
+    <div class="pane" style="position:relative"><div id="st-pt"></div>
+     <div class="wait" id="wait" hidden><div>상대를 기다리는 중이에요</div><div>코드 <b id="waitCode"></b></div><button class="btn small" id="copyWait" type="button">코드 복사</button></div>
+     <div class="plate"><div class="who"><img id="pf-pt" class="pf" hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><div><b id="n-pt">상대</b><div class="sub"><span id="w-pt"></span></div></div></div><div class="t" id="t-pt">--:--</div></div></div>
    </div>
+   <div class="strip" id="strip"></div>
    <div class="foot">
-    <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" id="globe" style="width:130px;image-rendering:pixelated">
+    <img id="globe" alt="" style="width:130px;image-rendering:pixelated" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
     <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px">
      <div style="font-size:13px" id="moonTxt"></div>
-     <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn p" id="goTown">▶ 상대 동네 가보기</button><button class="btn" id="photo">▣ 오늘의 사진 (0/3)</button></div>
+     <div class="btns"><button class="btn p" id="goTown">▶ 상대 동네 가보기</button><button class="btn" id="photo">▣ 오늘의 사진 보내기 (0/3)</button></div>
+     <div class="btns"><button class="btn" id="goPhotos">사진함</button><button class="btn" id="goNotes">쪽지함</button></div>
     </div>
    </div>
   </div>
 
-  <!-- 상대 동네 -->
+  <!-- 4. 동네 -->
   <div class="view town" id="v-town">
-   <div class="head"><b id="townTitle"></b><button class="btn" id="back" style="flex:0;min-width:0;padding:8px 14px">◀ 돌아가기</button></div>
+   <div class="head"><b id="townTitle"></b><button class="btn small" id="back">◀ 돌아가기</button></div>
+   <div class="tabs"><button class="tab on" id="tabPt">상대 동네</button><button class="tab" id="tabMe">내 동네 (받은 쪽지)</button></div>
    <div style="max-width:560px;margin:0 auto;border-left:4px solid var(--ink);border-right:4px solid var(--ink)"><div id="st-town"></div></div>
-   <div class="emptyhint" id="noteEmpty">아직 쪽지가 없어요. 첫 쪽지를 남겨보세요.</div>
-   <div class="foot" style="border-top:4px solid var(--ink)"><input id="noteIn" maxlength="24" placeholder="쪽지 남기기 (최대 24자)"><button class="btn p" id="addNote" style="flex:0;min-width:0">붙이기</button></div>
+   <div class="emptyhint" id="noteEmpty"></div>
+   <div class="foot" id="noteForm" style="border-top:4px solid var(--ink)"><input id="noteIn" maxlength="24" placeholder="쪽지 남기기 (최대 24자)"><button class="btn p small" id="addNote">붙이기</button></div>
   </div>
+
+  <!-- 5. 사진함 -->
+  <div class="view town" id="v-photos">
+   <div class="head"><b>사진함</b><button class="btn small" id="backP">◀ 돌아가기</button></div>
+   <div class="list" id="photoList"></div>
+  </div>
+
+  <!-- 6. 쪽지함 -->
+  <div class="view town" id="v-notes">
+   <div class="head"><b>쪽지함</b><button class="btn small" id="backN">◀ 돌아가기</button></div>
+   <div class="tabs"><button class="tab on" id="tabIn">받은 쪽지</button><button class="tab" id="tabOut">보낸 쪽지</button></div>
+   <div class="list" id="noteList"></div>
+  </div>
+
   <div class="toast" id="toast"></div>
+
+  <!-- 사진 보내기 -->
+  <div class="modal" id="m-photo" hidden>
+   <div class="mbox">
+    <h3>오늘의 사진 보내기</h3>
+    <label class="btn small">사진 선택 / 촬영<input id="pFile" type="file" accept="image/*" capture="environment" hidden></label>
+    <img id="pPrev" class="pprev" hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
+    <label class="inl"><input type="checkbox" id="pdot"> 도트 사진으로 보내기</label>
+    <input id="pCap" maxlength="30" placeholder="한마디 (선택, 최대 30자)">
+    <div class="row2"><button class="btn" id="pCancel" type="button">취소</button><button class="btn p" id="pSend" type="button" disabled>보내기</button></div>
+    <div class="hint">하루 최대 3장까지 보낼 수 있어요.</div>
+   </div>
+  </div>
+  <div class="modal" id="m-view" hidden><div class="mbox lb"><img id="lbImg" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><div id="lbMeta" class="hint"></div><div id="lbCap"></div></div></div>
  </div>
 </div>
 
@@ -85,8 +141,12 @@
  <button id="real">실제 날씨 불러오기</button><button id="reset">처음부터 다시</button><span id="status"></span>
 </div>
 
+<script src="src/config.js"></script>
 <script src="src/assets.js"></script>
 <script src="src/dotify.js"></script>
+<script src="src/geo.js"></script>
+<script src="src/avatar.js"></script>
+<script src="src/api.js"></script>
 <script src="src/app.js"></script>
 </body>
 </html>
