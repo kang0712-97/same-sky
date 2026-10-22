@@ -51,3 +51,38 @@
 body{margin:0;padding:20px 12px;background:#f2ebd6}
 .title{max-width:1020px;margin:0 auto 14px;font-family:Galmuri11,ui-monospace,monospace;color:#1f2420}
 .title h1{margin:0;font-size:22px;letter-spacing:3px}.title p{margin:4px 0 0;font-size:13px;opacity:.75}
+
+/* 등록 화면 */
+.mini{font-family:inherit;font-size:12px;border:2px solid var(--ink);background:var(--paper);padding:4px 8px;cursor:pointer;color:var(--ink)}
+.mini:hover{background:var(--ink);color:var(--paper)}
+.setup{padding:18px;display:flex;flex-direction:column;gap:14px;max-width:760px;margin:0 auto}
+.setup h2{margin:0;font-size:20px}
+.setup fieldset{border:3px solid var(--ink);padding:14px;display:flex;flex-direction:column;gap:12px;margin:0}
+.setup legend{padding:0 8px;font-weight:bold}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.fld input{font-family:inherit;border:3px solid var(--ink);padding:9px;background:#fffaf0;font-size:14px;color:var(--ink)}
+.avs{display:flex;gap:10px;flex-wrap:wrap}
+.av{border:3px solid var(--ink);background:#e9dfc3;padding:6px 10px;cursor:pointer}
+.av img{width:42px;display:block;image-rendering:pixelated}
+.av.on{background:#fff;box-shadow:3px 3px 0 var(--ink)}
+.up summary{cursor:pointer;font-size:13px;text-decoration:underline}
+.upbody{display:flex;flex-direction:column;gap:8px;padding:10px 0;align-items:flex-start}
+.inl{font-size:13px;display:flex;gap:6px;align-items:center}
+.inl input{width:auto}
+.hint{font-size:12px;opacity:.75;line-height:1.5}
+.prev{width:90px;image-rendering:pixelated;border:3px solid var(--ink);background:#e9dfc3}
+.btn.small{flex:0 0 auto;min-width:0;padding:8px 14px;display:inline-block;white-space:nowrap}
+.srch{display:flex;gap:8px}.srch input{flex:1}
+.cities{display:flex;flex-direction:column;gap:6px}
+.city{font-family:inherit;text-align:left;border:2px solid var(--ink);background:var(--paper);padding:8px 10px;cursor:pointer;font-size:13px;color:var(--ink)}
+.city:hover{background:var(--ink);color:var(--paper)}
+.picked{font-size:13px;font-weight:bold}
+.row2{display:flex;gap:10px;justify-content:flex-end}.row2 .btn{flex:0;min-width:120px}
+.err{color:#b3261e;font-size:13px;min-height:18px}
+.who{display:flex;align-items:center;gap:8px}
+.pf{width:34px;height:34px;image-rendering:pixelated;border:3px solid var(--ink);background:#e9dfc3}
+.emptyhint{text-align:center;font-size:13px;padding:12px;opacity:.7;display:none}
+
+[hidden]{display:none!important}
+.town .btn,.foot .btn{white-space:nowrap}
+.town .head .btn,#addNote{flex:0 0 auto!important;width:auto}
