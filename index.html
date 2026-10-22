@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Same Sky · 같은 하늘</title>
+<meta name="description" content="서로 다른 하늘 아래, 하나의 하루. 장거리 연애 커플을 위한 도트 일상 공유 화면.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<div class="title"><h1>SAME SKY</h1><p>다른 곳에 있어도, 같은 하늘 아래.</p></div>
+<div class="desk" id="desk">
+ <div class="ss">
+  <div class="bar"><span class="dot f"></span><span class="dot"></span><span class="dot"></span><span style="flex:1;text-align:center;letter-spacing:3px">SAME SKY</span><span style="font-size:13px" id="live">…</span></div>
+
+  <!-- 홈 -->
+  <div class="view on" id="v-home">
+   <div class="twin">
+    <div class="badge" id="diff">시차 13시간</div>
+    <div class="pane"><div id="st-seoul"></div><div class="plate"><div><b>SEOUL · 나</b><div class="sub"><img id="moonIcon" style="width:15px"><span id="w-seoul"></span></div></div><div class="t" id="t-seoul">--:--</div></div></div>
+    <div class="pane"><div id="st-ny"></div><div class="plate"><div><b>NEW YORK · 너</b><div class="sub"><span id="w-ny"></span></div></div><div class="t" id="t-ny">--:--</div></div></div>
+   </div>
+   <div class="foot">
+    <img id="globe" style="width:130px;image-rendering:pixelated">
+    <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px">
+     <div style="font-size:13px" id="moonTxt"></div>
+     <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn p" id="goTown">▶ 상대 동네 가보기</button><button class="btn" id="photo">▣ 오늘의 사진 (1/3)</button></div>
+    </div>
+   </div>
+  </div>
+
+  <!-- 상대 동네 -->
+  <div class="view town" id="v-town">
+   <div class="head"><b id="townTitle">NEW YORK · 너의 동네</b><button class="btn" id="back" style="flex:0;min-width:0;padding:8px 14px">◀ 돌아가기</button></div>
+   <div style="max-width:560px;margin:0 auto;border-left:4px solid var(--ink);border-right:4px solid var(--ink)"><div id="st-town"></div></div>
+   <div class="foot" style="border-top:4px solid var(--ink)"><input id="noteIn" maxlength="24" placeholder="쪽지 남기기 (최대 24자)"><button class="btn p" id="addNote" style="flex:0;min-width:0">붙이기</button></div>
+  </div>
+  <div class="toast" id="toast"></div>
+ </div>
+</div>
+
+<div class="demo"><b>데모 컨트롤</b>
+ 서울 <select id="sel-seoul"></select> 뉴욕 <select id="sel-ny"></select>
+ <button id="real">실제 날씨 불러오기</button><span id="status"></span>
+</div>
+
+
+<script src="src/assets.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>
