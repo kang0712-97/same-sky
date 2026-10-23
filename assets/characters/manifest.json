@@ -4,11 +4,35 @@
       "parts": {
         "hair":   { "colors": ["#262425", "#1e1c1d", "#171718"], "rows": [0, 0.66] },
         "top":    { "colors": ["#f9ebdb", "#faefdf"], "rows": [0.28, 0.62] },
-        "bottom": { "colors": ["#364c4f"], "rows": [0.5, 0.7] } } },
+        "bottom": { "colors": ["#364c4f"], "rows": [0.5, 0.7] } },
+      "hairStyles": [
+        { "id": "long", "name": "긴 머리" },
+        { "id": "bob", "name": "단발", "cut": { "row": 24, "endRow": 33, "xl": 3, "xr": 18 } },
+        { "id": "short", "name": "짧은 머리", "cut": { "row": 16, "endRow": 33, "xl": 5, "xr": 16 } }
+      ],
+      "anchors": {
+        "band": [7, 8], "beanie": 6, "cups": [11, 16], "bow": [13, 1], "cat": [4, 0],
+        "glasses": { "y": [11, 13], "lx": [7, 9], "bridge": [10, 11] },
+        "scarf": { "y": [21, 23], "x": [6, 15], "tailX": [12, 14], "tailY": [24, 30] } } },
     { "id": "boy", "name": "캡 모자 소년", "file": "boy.png",
       "parts": {
         "hair":   { "colors": ["#2a2d2e", "#19191a", "#121314"], "rows": [0, 0.3] },
         "top":    { "colors": ["#384b54"], "rows": [0.26, 0.66] },
-        "bottom": { "colors": ["#c6baad", "#9c958b"], "rows": [0.6, 0.88] } } }
+        "bottom": { "colors": ["#c6baad", "#9c958b"], "rows": [0.6, 0.88] } },
+      "hairStyles": [
+        { "id": "cap", "name": "캡 모자" },
+        { "id": "bare", "name": "맨머리", "removeCap": { "color": "#f5e4d2", "toRow": 14 } }
+      ],
+      "anchors": {
+        "band": [8, 9], "beanie": 8, "cups": [11, 17], "bow": [13, 1], "cat": [4, 0],
+        "glasses": { "y": [13, 15], "lx": [6, 9], "bridge": [10, 11] },
+        "scarf": { "y": [20, 22], "x": [7, 14], "tailX": [12, 14], "tailY": [23, 29] } } }
+  ],
+  "headItems": [
+    { "id": "none", "name": "없음" }, { "id": "band", "name": "머리띠" }, { "id": "bow", "name": "리본" },
+    { "id": "beanie", "name": "비니" }, { "id": "cat", "name": "고양이 귀" }, { "id": "phones", "name": "헤드폰" }
+  ],
+  "patterns": [
+    { "id": "none", "name": "무늬 없음" }, { "id": "stripe", "name": "줄무늬" }, { "id": "dot", "name": "도트" }, { "id": "check", "name": "체크" }
   ]
 }

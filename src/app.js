@@ -262,11 +262,26 @@
     });
     $('avPrev').src = Av.thumbUrl(a);
     $('colors').hidden = !!a.custom;
-    [['hair', '머리'], ['top', '상의'], ['bottom', '하의']].forEach(([k, label]) => {
+    [['hair', '머리색'], ['top', '상의색'], ['bottom', '하의색']].forEach(([k, label]) => {
       const row = $('c-' + k); row.innerHTML = '<span class="cl">' + label + '</span>';
       const def = document.createElement('button'); def.type = 'button'; def.className = 'sw2 def' + (!a[k] ? ' on' : ''); def.textContent = '기본'; def.onclick = () => { a[k] = null; renderSetupAvatar(); }; row.appendChild(def);
       Av.SWATCH[k].forEach(c => { const s = document.createElement('button'); s.type = 'button'; s.className = 'sw2' + (a[k] === c ? ' on' : ''); s.style.background = c; s.setAttribute('aria-label', c); s.onclick = () => { a[k] = c; renderSetupAvatar(); }; row.appendChild(s); });
     });
+    // 머리 모양 · 소품 · 안경/목도리 · 무늬
+    const sb = $('styles'); sb.innerHTML = ''; sb.hidden = !!a.custom;
+    if (!a.custom) {
+      const ch = Av.byId(a.char);
+      const row = label => { const r = document.createElement('div'); r.className = 'crow'; r.innerHTML = '<span class="cl">' + label + '</span>'; sb.appendChild(r); return r; };
+      const chip = (r, text, on, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (on ? ' on' : ''); b.textContent = text; b.onclick = () => { fn(); renderSetupAvatar(); }; r.appendChild(b); };
+      if (ch.hairStyles && ch.hairStyles.length > 1) { const r = row('머리모양'); ch.hairStyles.forEach(s => chip(r, s.name, (a.hairStyle || ch.hairStyles[0].id) === s.id, () => { a.hairStyle = s.id; })); }
+      const rh = row('소품'); Av.headItems().forEach(s => chip(rh, s.name, (a.head || 'none') === s.id, () => { a.head = s.id; }));
+      const rf = row('꾸미기'); chip(rf, '안경', !!a.glasses, () => { a.glasses = !a.glasses; }); chip(rf, '목도리', !!a.scarf, () => { a.scarf = !a.scarf; });
+      if ((a.head && a.head !== 'none') || a.scarf) {
+        const rc = row('소품색'); Av.SWATCH.accent.forEach(c => { const s = document.createElement('button'); s.type = 'button'; s.className = 'sw2' + ((a.accent || Av.SWATCH.accent[0]) === c ? ' on' : ''); s.style.background = c; s.setAttribute('aria-label', c); s.onclick = () => { a.accent = c; renderSetupAvatar(); }; rc.appendChild(s); });
+      }
+      const rt = row('상의무늬'); Av.patterns().forEach(s => chip(rt, s.name, (a.tpat || 'none') === s.id, () => { a.tpat = s.id; }));
+      const rb = row('하의무늬'); Av.patterns().forEach(s => chip(rb, s.name, (a.bpat || 'none') === s.id, () => { a.bpat = s.id; }));
+    }
   }
   function renderPicked() {
     const p = draft.place, cn = Geo.country(p.cc), el = $('picked');

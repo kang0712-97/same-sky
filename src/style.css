@@ -145,3 +145,9 @@ img.th{width:76px;height:76px;object-fit:cover;border:3px solid var(--ink);curso
 .regions .cities{flex-basis:100%;margin-left:48px;max-width:520px}
 .regions .city{font-family:inherit}
 .rgsum{font-size:13px;font-weight:bold;border-top:2px dashed #888;padding-top:8px}
+
+/* 머리 모양·소품 칩 */
+.cl{width:62px;flex:0 0 62px}
+.chip{font-family:inherit;font-size:12px;border:2px solid var(--ink);background:var(--paper);color:var(--ink);padding:4px 9px;cursor:pointer}
+.chip:hover{background:var(--ink);color:var(--paper)}
+.chip.on{background:var(--ink);color:var(--paper)}
