@@ -86,6 +86,7 @@
      <div class="wait" id="wait" hidden><div>상대를 기다리는 중이에요</div><div>코드 <b id="waitCode"></b></div><button class="btn small" id="copyWait" type="button">코드 복사</button></div>
      <div class="plate"><div class="who"><img id="pf-pt" class="pf" hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><div><b id="n-pt">상대</b><div class="sub"><span id="w-pt"></span></div></div></div><div class="t" id="t-pt">--:--</div></div></div>
    </div>
+   <button class="news" id="news" type="button" hidden></button>
    <div class="strip" id="strip"></div>
    <div class="foot">
     <canvas id="globe" width="81" height="81" style="width:130px;image-rendering:pixelated" aria-label="두 도시를 잇는 지구본"></canvas>
@@ -134,13 +135,13 @@
     <div class="hint">하루 최대 3장까지 보낼 수 있어요.</div>
    </div>
   </div>
-  <div class="modal" id="m-view" hidden><div class="mbox lb"><img id="lbImg" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><div id="lbMeta" class="hint"></div><div id="lbCap"></div></div></div>
+  <div class="modal" id="m-view" hidden><div class="mbox lb"><img id="lbImg" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><div id="lbMeta" class="hint"></div><div id="lbCap"></div><div id="lbNote" class="hint"></div><button class="btn" id="lbHeart" type="button" hidden>♡ 하트 보내기</button></div></div>
  </div>
 </div>
 
 <div class="demo" id="demo" hidden><b>데모 컨트롤</b>
  나 <select id="sel-me"></select> 상대 <select id="sel-pt"></select>
- <button id="real">실제 날씨 불러오기</button><button id="reset">처음부터 다시</button><span id="status"></span>
+ <button id="real">실제 날씨 불러오기</button><button id="demoSend">무노가 사진·쪽지 보내기</button><button id="reset">처음부터 다시</button><span id="status"></span>
 </div>
 
 <div class="demo regions" id="regions" hidden>

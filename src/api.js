@@ -22,6 +22,7 @@
     addPhoto: (code, slot, p) => rpc('ss_add_photo', { p_code: code, p_slot: slot, p_local_date: p.date, p_caption: p.caption || '', p_weather: p.weather || '', p_data: p.data }),
     listPhotos: code => rpc('ss_list_photos', { p_code: code, p_limit: 40 }),
     getState: code => rpc('ss_state', { p_code: code }),
+    heartPhoto: (code, id, slot) => rpc('ss_heart_photo', { p_code: code, p_photo_id: id, p_slot: slot }),
     addNote: (code, slot, n) => rpc('ss_add_note', { p_code: code, p_slot: slot, p_body: n.body, p_x: n.x, p_y: n.y }),
     listNotes: code => rpc('ss_list_notes', { p_code: code })
   };

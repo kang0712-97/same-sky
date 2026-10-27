@@ -179,3 +179,13 @@ img.th{width:76px;height:76px;object-fit:cover;border:3px solid var(--ink);curso
   .demo,.regions{margin:14px 6px 0}
   .tab{font-size:12px;padding:10px 4px}
 }
+
+/* 새 소식 배너 · 하트 표시 */
+.news{display:block;width:100%;font-family:inherit;font-size:14px;font-weight:bold;text-align:center;padding:12px;border:0;border-top:4px solid var(--ink);background:#ffe9a8;color:var(--ink);cursor:pointer;animation:newsb 1.6s steps(1) infinite}
+.news:hover{background:var(--ink);color:#ffe9a8}
+.news[hidden]{display:none}
+@keyframes newsb{50%{background:#fff3c8}}
+.thw{position:relative;display:inline-block;line-height:0}
+.hb{position:absolute;right:-2px;bottom:-2px;background:var(--paper);border:2px solid var(--ink);color:#c8463c;font-size:11px;line-height:1;padding:2px 3px}
+#lbHeart{align-self:stretch}
+@media (prefers-reduced-motion:reduce){.news{animation:none}}

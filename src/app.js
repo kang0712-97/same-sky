@@ -26,14 +26,46 @@
     async saveMember() { },
     async addPhoto(code, slot, p) {
       if (L.photos.filter(x => x.slot === slot && x.local_date === p.date).length >= 3) { const e = new Error('limit'); e.code = 'limit'; throw e; }
-      L.photos.unshift({ id: 'l' + Date.now(), slot, local_date: p.date, caption: p.caption || '', weather: p.weather || '', data: p.data, taken_at: new Date().toISOString() }); saveL();
+      const id = 'l' + Date.now();
+      L.photos.unshift({ id, slot, local_date: p.date, caption: p.caption || '', weather: p.weather || '', data: p.data, hearts: [], taken_at: new Date().toISOString() }); saveL();
+      setTimeout(() => { const ph = L.photos.find(x => x.id === id); if (ph) { ph.hearts = ph.hearts || []; if (!ph.hearts.includes('b')) ph.hearts.push('b'); saveL(); refresh(true); } }, 6000);   // 체험: 상대가 잠시 뒤 하트를 보냄
     },
-    async listPhotos() { return L.photos; },
+    async heartPhoto(code, id, slot) { const ph = L.photos.find(x => String(x.id) === String(id)); if (!ph) return; ph.hearts = ph.hearts || []; const i = ph.hearts.indexOf(slot); if (i >= 0) ph.hearts.splice(i, 1); else ph.hearts.push(slot); saveL(); },
+    async listPhotos() { return JSON.parse(JSON.stringify(L.photos)); },   // 복사본을 돌려줘야 변경 감지가 동작
     async addNote(code, slot, n) { L.notes.unshift({ id: 'l' + Date.now(), slot, body: n.body, x: n.x, y: n.y, created_at: new Date().toISOString() }); saveL(); },
-    async listNotes() { return L.notes; },
-    async getState() { return { p: L.photos.length, n: L.notes.length }; }
+    async listNotes() { return JSON.parse(JSON.stringify(L.notes)); },
+    async getState() { return { p: L.photos.length + ':' + L.photos.reduce((s, x) => s + (x.hearts || []).length, 0), n: L.notes.length }; }
   };
   const api = () => S && S.mode === 'local' ? localApi : Remote;
+
+  // 체험 모드용 예시 사진 (캔버스로 도트 느낌 장면을 그림)
+  function demoPhoto(kind) {
+    const c = document.createElement('canvas'); c.width = 96; c.height = 72; const x = c.getContext('2d');
+    const R = (col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w, h); };
+    if (kind === 'coffee') {
+      R('#e8d9b8', 0, 0, 96, 72); R('#b98a5a', 0, 52, 96, 20); R('#f7f1de', 32, 24, 28, 28); R('#1f2420', 32, 24, 28, 2); R('#1f2420', 32, 24, 2, 28); R('#1f2420', 58, 24, 2, 28); R('#1f2420', 32, 50, 28, 2);
+      R('#6b4226', 34, 26, 24, 5); R('#1f2420', 60, 30, 8, 2); R('#1f2420', 66, 30, 2, 12); R('#1f2420', 60, 40, 8, 2); R('#fff', 40, 10, 2, 8); R('#fff', 48, 6, 2, 10);
+    } else if (kind === 'sunset') {
+      ['#6b5b95', '#c45a7a', '#e8845a', '#f5b05c', '#f7d98a'].forEach((col, i) => R(col, 0, i * 11, 96, 11)); R('#f7f1de', 58, 34, 14, 14);
+      R('#1f2420', 0, 52, 96, 20); [[4, 38, 10], [16, 30, 12], [32, 40, 9], [60, 34, 12], [76, 26, 10], [88, 40, 8]].forEach(([a, t, w]) => R('#1f2420', a, t, w, 52 - t + 20));
+      for (let i = 0; i < 8; i++) R('#f5b05c', 6 + i * 11, 44 + (i % 3) * 4, 2, 2);
+    } else {
+      for (let i = 0; i < 7; i++) R(['#78b6e8', '#8cc1ec', '#a0cdf0', '#b4d8f4', '#c8e2f8', '#dceefb', '#eef7fd'][i], 0, i * 10, 96, 10);
+      R('#fff', 14, 18, 30, 10); R('#fff', 20, 12, 18, 8); R('#fff', 58, 34, 26, 9); R('#1f2420', 0, 60, 96, 12); R('#509664', 0, 56, 96, 4);
+    }
+    return c.toDataURL('image/png');
+  }
+  const DEMO_CAPS = ['출근길 커피', '노을이 예뻐서', '오늘 하늘 봐', '점심 먹으러 가는 길', '퇴근!'];
+  const DEMO_NOTES = ['잘 자, 오늘도 수고했어', '보고 싶다', '밥은 먹었어?', '내일은 꼭 전화하자'];
+  const dateIn = tz => new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
+  function demoPartnerSends(n) {
+    const p = (S.demoPartner || DEMO_PARTNER), now = Date.now(), kinds = ['coffee', 'sunset', 'sky'], k = L.photos.length;
+    for (let i = 0; i < n; i++) {
+      L.photos.unshift({ id: 'd' + now + i, slot: 'b', local_date: dateIn(p.city.tz), caption: DEMO_CAPS[(k + i) % DEMO_CAPS.length], weather: '', data: demoPhoto(kinds[(k + i) % 3]), hearts: [], taken_at: new Date(now - i * 90000).toISOString() });
+      L.notes.unshift({ id: 'dn' + now + i, slot: 'b', body: DEMO_NOTES[(L.notes.length + i) % DEMO_NOTES.length], x: 14 + Math.random() * 70, y: 78 + Math.random() * 12, created_at: new Date(now - i * 60000).toISOString() });
+    }
+    saveL();
+  }
   function explain(e) {
     if (e.code === 'no_config' || e.code === 'no_schema') return '서버 준비가 아직 안 됐어요. (관리자: supabase/schema.sql 을 Supabase에서 실행해야 해요) — 지금은 "혼자 체험하기"를 쓸 수 있어요.';
     if (e.code === 'limit') return '오늘 3장을 모두 보냈어요.';
@@ -74,7 +106,7 @@
     $('goTown').disabled = !pt;
     const d = $('desk'); d.style.setProperty('--l', A.sky[W.me.kind][0]); d.style.setProperty('--r', A.sky[W.pt.kind][0]);
     SIDES.forEach(s => { const pf = $('pf-' + s), pr = person(s) && okProfile(person(s).profile) ? person(s).profile : null; pf.hidden = !pr; if (pr) pf.src = pr; });
-    paintTown(); paintStrip(); photoBtn(); paintRoute();
+    paintTown(); paintStrip(); photoBtn(); paintRoute(); paintNews();
   }
   // 지구본 + "서울 ━ 뉴욕 · 거리 · 시차" 요약
   function paintRoute() {
@@ -159,6 +191,38 @@
   const fmtDiff = df => { const h = Math.floor(df), m = Math.round((df - h) * 60); return m ? h + '시간 ' + m + '분' : h + '시간'; };
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+  /* ---------- 새 소식 ---------- */
+  const seen = () => S.seen || (S.seen = { p: '', n: '', h: [] });
+  const hearted = p => (p.hearts || []).filter(h => h !== S.slot).length > 0;
+  function unread() {
+    const sn = seen();
+    return {
+      np: D.photos.filter(p => p.slot !== S.slot && p.taken_at > sn.p).length,
+      nn: D.notes.filter(n => n.slot !== S.slot && n.created_at > sn.n).length,
+      nh: D.photos.filter(p => p.slot === S.slot && hearted(p) && !(sn.h || []).includes(p.id)).length
+    };
+  }
+  function markPhotosSeen() { const sn = seen(); const t = D.photos.filter(p => p.slot !== S.slot).map(p => p.taken_at).sort().pop(); if (t) sn.p = t; sn.h = D.photos.filter(p => p.slot === S.slot && hearted(p)).map(p => p.id); save(); paintNews(); }
+  function markNotesSeen() { const sn = seen(); const t = D.notes.filter(n => n.slot !== S.slot).map(n => n.created_at).sort().pop(); if (t) sn.n = t; save(); paintNews(); }
+  function paintNews() {
+    if (!S || !D.partner) { $('news').hidden = true; return; }
+    const u = unread(), box = $('news'), parts = [];
+    if (u.np) parts.push('사진 ' + u.np); if (u.nn) parts.push('쪽지 ' + u.nn); if (u.nh) parts.push('♥ ' + u.nh);
+    box.hidden = !parts.length;
+    if (parts.length) box.textContent = '● ' + D.partner.name + '의 새 소식이 도착했어요 · ' + parts.join(' · ');
+    $('goPhotos').textContent = '사진함' + (u.np + u.nh ? ' ●' + (u.np + u.nh) : ''); $('goNotes').textContent = '쪽지함' + (u.nn ? ' ●' + u.nn : '');
+  }
+  let prevU = null;
+  function notifyArrivals() {
+    const u = unread();
+    if (prevU && D.partner) {
+      const m = [];
+      if (u.np > prevU.np) m.push('새 사진'); if (u.nn > prevU.nn) m.push('새 쪽지'); if (u.nh > prevU.nh) m.push('내 사진에 하트 ♥');
+      if (m.length) toast(D.partner.name + '님이 보냈어요 · ' + m.join(' · '));
+    }
+    prevU = u;
+  }
+
   /* ---------- 데이터 새로고침 ---------- */
   async function refresh(quiet) {
     if (!S || !S.code) return;
@@ -167,9 +231,11 @@
       let pt = (c.members || []).find(m => m.slot !== S.slot) || null;
       if (pt) pt = { ...pt, city: cleanCity(pt.city), profile: okProfile(pt.profile) ? pt.profile : null };
       const ph = (await api().listPhotos(S.code)).filter(p => okImg(p.data) && okDate(p.local_date)), nt = await api().listNotes(S.code);
-      const changed = JSON.stringify([pt, ph.map(p => p.id), nt.map(n => n.id)]) !== JSON.stringify([D.partner, D.photos.map(p => p.id), D.notes.map(n => n.id)]);
+      const sig = (p2, ph2, nt2) => JSON.stringify([p2, ph2.map(p => p.id + ':' + (p.hearts || []).join('')), nt2.map(n => n.id)]);
+      const changed = sig(pt, ph, nt) !== sig(D.partner, D.photos, D.notes);
       const hadPt = !!D.partner;
       D = { partner: pt, photos: ph, notes: nt };
+      notifyArrivals();
       if (changed || !quiet) { paint(); if (!hadPt && pt) real(); drawPhotos(); drawNotesBox(); }
     } catch (e) { if (!quiet) toast(explain(e)); }
   }
@@ -182,11 +248,17 @@
     box.innerHTML = '';
     if (!theirs.length) { box.innerHTML = '<span class="muted">' + (D.partner ? esc(D.partner.name) + '님이 아직 사진을 보내지 않았어요' : '') + '</span>'; return; }
     box.innerHTML = '<span class="muted">' + esc(D.partner.name) + '의 사진</span>';
-    theirs.forEach(p => { const i = document.createElement('img'); i.src = p.data; i.alt = ''; i.className = 'th' + (isPix(p.data) ? ' pix' : ''); i.onclick = () => openPhoto(p); box.appendChild(i); });
+    theirs.forEach(p => box.appendChild(thumbEl(p)));
+  }
+  function thumbEl(p) {
+    const w = document.createElement('div'); w.className = 'thw';
+    const i = document.createElement('img'); i.className = 'th' + (isPix(p.data) ? ' pix' : ''); i.alt = ''; i.src = p.data; i.onclick = () => openPhoto(p); w.appendChild(i);
+    if ((p.hearts || []).length) { const h = document.createElement('span'); h.className = 'hb'; h.textContent = '♥'; w.appendChild(h); }
+    return w;
   }
   function addThumbs(parent, list) {
     if (!list.length) { const m = document.createElement('div'); m.className = 'muted'; m.textContent = '—'; parent.appendChild(m); return; }
-    list.forEach(p => { const i = document.createElement('img'); i.className = 'th' + (isPix(p.data) ? ' pix' : ''); i.alt = ''; i.src = p.data; i.onclick = () => openPhoto(p); parent.appendChild(i); });
+    list.forEach(p => parent.appendChild(thumbEl(p)));
   }
   function drawPhotos() {
     const box = $('photoList'); if (!box || !S) return;
@@ -203,10 +275,16 @@
       wrap.appendChild(cols); box.appendChild(wrap);
     });
   }
+  let curPhoto = null;
   function openPhoto(p) {
+    curPhoto = p;
     $('lbImg').src = p.data; $('lbImg').className = isPix(p.data) ? 'pix' : '';
     $('lbMeta').textContent = nameOf(p.slot) + ' · ' + when(p.taken_at) + (p.weather ? ' · ' + p.weather : '');
-    $('lbCap').textContent = p.caption || ''; $('m-view').hidden = false;
+    $('lbCap').textContent = p.caption || '';
+    const mine = p.slot === S.slot, hb = $('lbHeart'), hs = (p.hearts || []);
+    hb.hidden = mine; hb.textContent = hs.includes(S.slot) ? '♥ 하트 보냄 (누르면 취소)' : '♡ 하트 보내기';
+    $('lbNote').textContent = mine ? (hs.some(h => h !== S.slot) ? nameOf(otherSlot()) + '님이 하트를 보냈어요 ♥' : '') : '';
+    $('m-view').hidden = false;
   }
   function loadImg(file) { return new Promise((res, rej) => { const u = URL.createObjectURL(file), im = new Image(); im.onload = () => { URL.revokeObjectURL(u); res(im); }; im.onerror = rej; im.src = u; }); }
   function prepare(im, dot) {
@@ -368,7 +446,7 @@
       S = { code, slot, mode: 'remote', me: pendingMe }; await Remote.saveMember(code, slot, S.me); save(); startHome();
     } catch (e) { $('connErr').textContent = explain(e); }
   }
-  function connectDemo() { S = { code: 'DEMO', slot: 'a', mode: 'local', me: pendingMe }; save(); startHome(); }
+  function connectDemo() { S = { code: 'DEMO', slot: 'a', mode: 'local', me: pendingMe }; save(); if (!L.photos.length && !L.notes.length) demoPartnerSends(2); startHome(); }
 
   /* ---------- 홈 ---------- */
   let started = false;
@@ -436,17 +514,24 @@
   $('codeBtn').onclick = () => { try { navigator.clipboard.writeText(S.code); toast('코드를 복사했어요: ' + S.code); } catch (e) { toast('코드: ' + S.code); } };
   $('copyWait').onclick = $('codeBtn').onclick;
   $('goTown').onclick = () => { townSide = 'pt'; paintTown(); view('v-town'); };
-  $('tabPt').onclick = () => { townSide = 'pt'; paintTown(); }; $('tabMe').onclick = () => { townSide = 'me'; paintTown(); };
+  $('tabPt').onclick = () => { townSide = 'pt'; paintTown(); }; $('tabMe').onclick = () => { townSide = 'me'; paintTown(); markNotesSeen(); };
   $('back').onclick = () => view('v-home');
   $('addNote').onclick = addNote; enterKey($('noteIn'), addNote);
-  $('goPhotos').onclick = () => { drawPhotos(); view('v-photos'); }; $('backP').onclick = () => view('v-home');
-  $('goNotes').onclick = () => { drawNotesBox(); view('v-notes'); }; $('backN').onclick = () => view('v-home');
+  $('goPhotos').onclick = () => { drawPhotos(); view('v-photos'); markPhotosSeen(); }; $('backP').onclick = () => view('v-home');
+  $('goNotes').onclick = () => { drawNotesBox(); view('v-notes'); markNotesSeen(); }; $('backN').onclick = () => view('v-home');
   $('tabIn').onclick = () => { notesTab = 'in'; drawNotesBox(); }; $('tabOut').onclick = () => { notesTab = 'out'; drawNotesBox(); };
   $('photo').onclick = () => { pending = null; $('pPrev').hidden = true; $('pCap').value = ''; $('pSend').disabled = true; $('pdot').checked = false; $('pFile').value = ''; $('m-photo').hidden = false; };
   $('pFile').onchange = e => { if (e.target.files[0]) onPhotoFile(e.target.files[0]); };
   $('pdot').onchange = () => { if (!pending || !pending.im) return; pending.data = prepare(pending.im, $('pdot').checked); $('pPrev').src = pending.data; $('pPrev').className = $('pdot').checked ? 'pix' : ''; };
   $('pCancel').onclick = () => { $('m-photo').hidden = true; }; $('pSend').onclick = sendPhoto;
   $('m-view').onclick = () => { $('m-view').hidden = true; };
+  $('lbHeart').onclick = async e => {
+    e.stopPropagation(); if (!curPhoto) return;
+    try { await api().heartPhoto(S.code, curPhoto.id, S.slot); await refresh(true); const np = D.photos.find(x => String(x.id) === String(curPhoto.id)); if (np) openPhoto(np); }
+    catch (err) { toast(explain(err)); }
+  };
+  $('news').onclick = () => { const u = unread(); if (u.np || u.nh) { drawPhotos(); view('v-photos'); markPhotosSeen(); } else { notesTab = 'in'; drawNotesBox(); view('v-notes'); markNotesSeen(); } };
+  $('demoSend').onclick = async () => { demoPartnerSends(1); await refresh(true); };
   $('real').onclick = real;
   $('reset').onclick = $('resetEdit').onclick = () => { if (confirm('이 기기에 저장된 정보를 지우고 처음부터 다시 할까요? (서버의 사진·쪽지는 코드로 다시 들어오면 볼 수 있어요)')) { try { localStorage.removeItem(KEY); localStorage.removeItem(LKEY); } catch (e) { } location.reload(); } };
   SIDES.forEach(s => {

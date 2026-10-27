@@ -26,6 +26,7 @@ create table if not exists ss_photos (
   taken_at timestamptz not null default now()
 );
 create index if not exists ss_photos_code_time on ss_photos(code, taken_at desc);
+alter table ss_photos add column if not exists hearts text[] not null default '{}';   -- 하트를 보낸 사람(slot) 목록
 create table if not exists ss_notes (
   id uuid primary key default gen_random_uuid(),
   code text not null references ss_couples(code) on delete cascade,
@@ -92,7 +93,7 @@ end $$;
 create or replace function ss_list_photos(p_code text, p_limit int default 60) returns json
 language sql security definer set search_path = public as $$
   select coalesce(json_agg(t), '[]'::json) from (
-    select id, slot, local_date, caption, weather, data, taken_at from ss_photos
+    select id, slot, local_date, caption, weather, data, taken_at, hearts from ss_photos
     where code = upper(p_code) order by taken_at desc limit least(p_limit, 60)
   ) t;
 $$;
@@ -113,15 +114,25 @@ language sql security definer set search_path = public as $$
   ) t;
 $$;
 
+-- 사진에 하트 보내기/취소 (누르면 토글)
+create or replace function ss_heart_photo(p_code text, p_photo_id uuid, p_slot text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if p_slot not in ('a','b') then raise exception 'bad_slot'; end if;
+  update ss_photos set hearts = case when p_slot = any(hearts) then array_remove(hearts, p_slot) else array_append(hearts, p_slot) end
+  where id = p_photo_id and code = upper(p_code);
+  if not found then raise exception 'no_photo'; end if;
+end $$;
+
 -- 가벼운 변경 감지용 (클라이언트가 40초마다 이것만 확인하고, 바뀐 때만 전체를 받음)
 create or replace function ss_state(p_code text) returns json
 language sql security definer set search_path = public as $$
   select json_build_object(
     'members', (select coalesce(max(updated_at)::text, '') from ss_members where code = upper(p_code)),
-    'photos',  (select count(*)::text || coalesce(max(taken_at)::text, '') from ss_photos where code = upper(p_code)),
+    'photos',  (select count(*)::text || coalesce(sum(cardinality(hearts))::text, '0') || coalesce(max(taken_at)::text, '') from ss_photos where code = upper(p_code)),
     'notes',   (select count(*)::text || coalesce(max(created_at)::text, '') from ss_notes where code = upper(p_code)));
 $$;
 
-grant execute on function ss_state(text) to anon;
+grant execute on function ss_state(text), ss_heart_photo(text,uuid,text) to anon;
 grant execute on function ss_create_couple(), ss_get_couple(text), ss_save_member(text,text,text,jsonb,jsonb,text),
   ss_add_photo(text,text,text,text,text,text), ss_list_photos(text,int), ss_add_note(text,text,text,real,real), ss_list_notes(text) to anon;
