@@ -10,7 +10,7 @@ const Z = 'ZZZZZZ', U = '00000000-0000-0000-0000-000000000000';
 const checks = [
   ['기본 함수 (ss_get_couple)', async () => (await rpc('ss_get_couple', { p_code: Z })).ok],
   ['변경 감지 (ss_state)  ← 2차 SQL', async () => (await rpc('ss_state', { p_code: Z })).ok],
-  ['입력 검증 (ss_add_photo 형식 검사)  ← 2차 SQL', async () => { const r = await rpc('ss_add_photo', { p_code: Z, p_slot: 'a', p_local_date: 'x', p_caption: '', p_weather: '', p_data: 'x', p_token: 'x' }); return !r.ok && /no_couple|bad_date|bad_image/.test(r.msg) && !missing(r.msg); }],
+  ['입력 검증 (ss_add_photo 형식 검사)  ← 2차 SQL', async () => { const r = await rpc('ss_add_photo', { p_code: Z, p_slot: 'a', p_local_date: 'x', p_caption: '', p_weather: '', p_data: 'x', p_token: 'x' }); return !r.ok && /forbidden|no_couple|bad_date|bad_image/.test(r.msg) && !missing(r.msg); }],
   ['하트 함수 (ss_heart_photo)  ← 3차 SQL', async () => { const r = await rpc('ss_heart_photo', { p_code: Z, p_photo_id: U, p_slot: 'a', p_token: 'x' }); return !missing(r.msg); }],
   ['내 방 함수 (ss_save_room / ss_get_rooms)  ← 4차 SQL', async () => { const a = await rpc('ss_get_rooms', { p_code: Z }); const b = await rpc('ss_save_room', { p_code: Z, p_slot: 'a', p_room: {}, p_token: 'x' }); return a.ok && !missing(b.msg); }],
   ['사칭 방지 (토큰 검증 쓰기 함수)  ← 5차 SQL', async () => { const r = await rpc('ss_add_note', { p_code: Z, p_slot: 'a', p_body: 'x', p_x: 1, p_y: 1, p_token: 'x' }); return !missing(r.msg); }],
