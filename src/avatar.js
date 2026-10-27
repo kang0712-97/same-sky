@@ -23,7 +23,8 @@
     await Promise.all(chars.map(c => c.builder ? null : new Promise(res => { const im = new Image(); im.onload = () => { imgs[c.id] = im; res(); }; im.onerror = res; im.src = BASE + c.file; })));
     return chars;
   }
-  const byId = id => chars.find(c => c.id === id) || chars[0];
+  const LEGACY = { girl: 'g01', boy: 'b01', make: 'g01' };   // 예전에 저장된 캐릭터 이름은 새 캐릭터로 연결
+  const byId = id => chars.find(c => c.id === id) || chars.find(c => c.id === LEGACY[id]) || chars[0];
 
   function bbox(d, w, h) {
     let x0 = w, y0 = h, x1 = 0, y1 = 0;
@@ -34,6 +35,7 @@
   // avatar: { char, hair, top, bottom, hairStyle, head, glasses, scarf, accent, tpat, bpat }
   function render(av) {
     const ch = byId(av.char), im = ch.builder ? window.SSBuilder.build(av) : imgs[ch.id], an = ch.anchors || {};
+    if (ch.v2) { const c0 = document.createElement('canvas'); c0.width = im.width; c0.height = im.height; c0.getContext('2d').drawImage(im, 0, 0); return c0; }   // 새 캐릭터는 완성된 그림 그대로
     const W = im.width, Hh = im.height;
     const c = document.createElement('canvas'); c.width = W; c.height = Hh;
     const x = c.getContext('2d'); x.drawImage(im, 0, 0);
@@ -197,6 +199,10 @@
     if (avatar.custom) return avatar.thumb;
     const k = JSON.stringify(avatar); if (hcache[k]) return hcache[k];
     const ch = byId(avatar.char); let bb;
+    if (ch.v2) {   // 머리 중심으로 정사각 잘라내기
+      const c = render(avatar), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, b = bbox(d, c.width, c.height), sw = b.x1 - b.x0 + 1, o = document.createElement('canvas'); o.width = o.height = 48;
+      const ox = o.getContext('2d'); ox.imageSmoothingEnabled = false; ox.drawImage(c, b.x0 - 2, b.y0 - 2, sw + 4, sw + 4, 0, 0, 48, 48); return hcache[k] = o.toDataURL();
+    }
     if (ch.builder) bb = { x0: 44, y0: 42 }; else { const im = imgs[ch.id], c0 = document.createElement('canvas'); c0.width = im.width; c0.height = im.height; const x0 = c0.getContext('2d'); x0.drawImage(im, 0, 0); bb = bbox(x0.getImageData(0, 0, im.width, im.height).data, im.width, im.height); }
     const o = document.createElement('canvas'); o.width = 26; o.height = 26;
     o.getContext('2d').drawImage(render(avatar), bb.x0 - 2, bb.y0 - 8, 26, 26, 0, 0, 26, 26);

@@ -1,399 +1,228 @@
 {
  "characters": [
   {
-   "id": "make",
-   "name": "직접 만들기",
-   "file": "",
-   "builder": true,
-   "parts": {
-    "skin": {
-     "colors": [
-      "#e9b48f",
-      "#d49a74"
-     ],
-     "rows": [
-      -1,
-      1
-     ]
-    },
-    "hair": {
-     "colors": [
-      "#262425",
-      "#312e2f"
-     ],
-     "rows": [
-      -1,
-      1
-     ]
-    },
-    "top": {
-     "colors": [
-      "#5a7fa8",
-      "#46678b"
-     ],
-     "rows": [
-      -1,
-      1
-     ]
-    },
-    "bottom": {
-     "colors": [
-      "#4a4f63",
-      "#3b3f50"
-     ],
-     "rows": [
-      -1,
-      1
-     ]
-    }
-   },
-   "hairStyles": [
-    {
-     "id": "crop",
-     "name": "짧은 머리"
-    },
-    {
-     "id": "buzz",
-     "name": "스포츠"
-    },
-    {
-     "id": "bob",
-     "name": "단발"
-    },
-    {
-     "id": "long",
-     "name": "긴 머리"
-    },
-    {
-     "id": "wave",
-     "name": "웨이브"
-    },
-    {
-     "id": "curly",
-     "name": "곱슬"
-    },
-    {
-     "id": "spiky",
-     "name": "뾰족"
-    },
-    {
-     "id": "ponytail",
-     "name": "포니테일"
-    },
-    {
-     "id": "bun",
-     "name": "똥머리"
-    }
-   ],
-   "anchors": {
-    "face": {
-     "cheek": [
-      13,
-      8
-     ],
-     "mouth": [
-      14,
-      10
-     ],
-     "mole": [
-      14,
-      12
-     ]
-    },
-    "band": [
-     7,
-     8
-    ],
-    "beanie": 6,
-    "cups": [
-     11,
-     16
-    ],
-    "bow": [
-     13,
-     1
-    ],
-    "cat": [
-     4,
-     0
-    ],
-    "glasses": {
-     "y": [
-      11,
-      13
-     ],
-     "lx": [
-      7,
-      9
-     ],
-     "bridge": [
-      10,
-      11
-     ]
-    },
-    "scarf": {
-     "y": [
-      21,
-      23
-     ],
-     "x": [
-      6,
-      15
-     ],
-     "tailX": [
-      12,
-      14
-     ],
-     "tailY": [
-      24,
-      30
-     ]
-    }
-   }
+   "id": "g01",
+   "name": "회색 맨투맨",
+   "file": "v2/g01.png",
+   "v2": true,
+   "group": "f",
+   "parts": {},
+   "anchors": {}
   },
   {
-   "id": "girl",
-   "name": "교복 소녀",
-   "file": "girl.png",
-   "parts": {
-    "hair": {
-     "colors": [
-      "#262425",
-      "#1e1c1d",
-      "#171718"
-     ],
-     "rows": [
-      0,
-      0.66
-     ]
-    },
-    "top": {
-     "colors": [
-      "#f9ebdb",
-      "#faefdf"
-     ],
-     "rows": [
-      0.28,
-      0.62
-     ]
-    },
-    "bottom": {
-     "colors": [
-      "#364c4f"
-     ],
-     "rows": [
-      0.5,
-      0.7
-     ]
-    }
-   },
-   "hairStyles": [
-    {
-     "id": "long",
-     "name": "긴 머리"
-    },
-    {
-     "id": "bob",
-     "name": "단발",
-     "cut": {
-      "row": 24,
-      "endRow": 33,
-      "xl": 3,
-      "xr": 18
-     }
-    },
-    {
-     "id": "short",
-     "name": "짧은 머리",
-     "cut": {
-      "row": 16,
-      "endRow": 33,
-      "xl": 5,
-      "xr": 16
-     }
-    }
-   ],
-   "anchors": {
-    "face": {
-     "cheek": [
-      13,
-      8
-     ],
-     "mouth": [
-      14,
-      10
-     ],
-     "mole": [
-      14,
-      12
-     ]
-    },
-    "band": [
-     7,
-     8
-    ],
-    "beanie": 6,
-    "cups": [
-     11,
-     16
-    ],
-    "bow": [
-     13,
-     1
-    ],
-    "cat": [
-     4,
-     0
-    ],
-    "glasses": {
-     "y": [
-      11,
-      13
-     ],
-     "lx": [
-      7,
-      9
-     ],
-     "bridge": [
-      10,
-      11
-     ]
-    },
-    "scarf": {
-     "y": [
-      21,
-      23
-     ],
-     "x": [
-      6,
-      15
-     ],
-     "tailX": [
-      12,
-      14
-     ],
-     "tailY": [
-      24,
-      30
-     ]
-    }
-   }
+   "id": "g02",
+   "name": "가디건 + 롱스커트",
+   "file": "v2/g02.png",
+   "v2": true,
+   "group": "f",
+   "parts": {},
+   "anchors": {}
   },
   {
-   "id": "boy",
-   "name": "캡 모자 소년",
-   "file": "boy.png",
-   "parts": {
-    "hair": {
-     "colors": [
-      "#2a2d2e",
-      "#19191a",
-      "#121314"
-     ],
-     "rows": [
-      0,
-      0.3
-     ]
-    },
-    "top": {
-     "colors": [
-      "#384b54"
-     ],
-     "rows": [
-      0.26,
-      0.66
-     ]
-    },
-    "bottom": {
-     "colors": [
-      "#c6baad",
-      "#9c958b"
-     ],
-     "rows": [
-      0.6,
-      0.88
-     ]
-    }
-   },
-   "hairStyles": [
-    {
-     "id": "cap",
-     "name": "캡 모자"
-    },
-    {
-     "id": "bare",
-     "name": "맨머리",
-     "removeCap": {
-      "color": "#f5e4d2",
-      "toRow": 14
-     }
-    }
-   ],
-   "anchors": {
-    "face": {
-     "cheek": [
-      15,
-      8
-     ],
-     "mouth": [
-      16,
-      10
-     ],
-     "mole": [
-      16,
-      12
-     ]
-    },
-    "band": [
-     8,
-     9
-    ],
-    "beanie": 8,
-    "cups": [
-     11,
-     17
-    ],
-    "bow": [
-     13,
-     1
-    ],
-    "cat": [
-     4,
-     0
-    ],
-    "glasses": {
-     "y": [
-      13,
-      15
-     ],
-     "lx": [
-      6,
-      9
-     ],
-     "bridge": [
-      10,
-      11
-     ]
-    },
-    "scarf": {
-     "y": [
-      20,
-      22
-     ],
-     "x": [
-      7,
-      14
-     ],
-     "tailX": [
-      12,
-      14
-     ],
-     "tailY": [
-      23,
-      29
-     ]
-    }
-   }
+   "id": "g03",
+   "name": "크림 니트",
+   "file": "v2/g03.png",
+   "v2": true,
+   "group": "f",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "g04",
+   "name": "후드 집업",
+   "file": "v2/g04.png",
+   "v2": true,
+   "group": "f",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "g05",
+   "name": "안경 + 체크 셔츠",
+   "file": "v2/g05.png",
+   "v2": true,
+   "group": "f",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "g06",
+   "name": "줄무늬 티",
+   "file": "v2/g06.png",
+   "v2": true,
+   "group": "f",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "g07",
+   "name": "교복",
+   "file": "v2/g07.png",
+   "v2": true,
+   "group": "f",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "g08",
+   "name": "트렌치코트",
+   "file": "v2/g08.png",
+   "v2": true,
+   "group": "f",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "g09",
+   "name": "한복",
+   "file": "v2/g09.png",
+   "v2": true,
+   "group": "f",
+   "parts": {},
+   "anchors": {},
+   "premium": true
+  },
+  {
+   "id": "g10",
+   "name": "롱패딩",
+   "file": "v2/g10.png",
+   "v2": true,
+   "group": "f",
+   "parts": {},
+   "anchors": {},
+   "premium": true
+  },
+  {
+   "id": "g11",
+   "name": "블랙 원피스",
+   "file": "v2/g11.png",
+   "v2": true,
+   "group": "f",
+   "parts": {},
+   "anchors": {},
+   "premium": true
+  },
+  {
+   "id": "g12",
+   "name": "파자마",
+   "file": "v2/g12.png",
+   "v2": true,
+   "group": "f",
+   "parts": {},
+   "anchors": {},
+   "premium": true
+  },
+  {
+   "id": "b01",
+   "name": "가디건",
+   "file": "v2/b01.png",
+   "v2": true,
+   "group": "m",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "b02",
+   "name": "맨투맨",
+   "file": "v2/b02.png",
+   "v2": true,
+   "group": "m",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "b03",
+   "name": "후드 집업",
+   "file": "v2/b03.png",
+   "v2": true,
+   "group": "m",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "b04",
+   "name": "안경 + 체크 셔츠",
+   "file": "v2/b04.png",
+   "v2": true,
+   "group": "m",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "b05",
+   "name": "데님 재킷",
+   "file": "v2/b05.png",
+   "v2": true,
+   "group": "m",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "b06",
+   "name": "비니 + 바람막이",
+   "file": "v2/b06.png",
+   "v2": true,
+   "group": "m",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "b07",
+   "name": "과잠",
+   "file": "v2/b07.png",
+   "v2": true,
+   "group": "m",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "b08",
+   "name": "교복",
+   "file": "v2/b08.png",
+   "v2": true,
+   "group": "m",
+   "parts": {},
+   "anchors": {}
+  },
+  {
+   "id": "b09",
+   "name": "한복",
+   "file": "v2/b09.png",
+   "v2": true,
+   "group": "m",
+   "parts": {},
+   "anchors": {},
+   "premium": true
+  },
+  {
+   "id": "b10",
+   "name": "롱패딩",
+   "file": "v2/b10.png",
+   "v2": true,
+   "group": "m",
+   "parts": {},
+   "anchors": {},
+   "premium": true
+  },
+  {
+   "id": "b11",
+   "name": "정장",
+   "file": "v2/b11.png",
+   "v2": true,
+   "group": "m",
+   "parts": {},
+   "anchors": {},
+   "premium": true
+  },
+  {
+   "id": "b12",
+   "name": "트레이닝",
+   "file": "v2/b12.png",
+   "v2": true,
+   "group": "m",
+   "parts": {},
+   "anchors": {},
+   "premium": true
   }
  ],
  "headItems": [

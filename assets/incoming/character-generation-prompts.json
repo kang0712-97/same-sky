@@ -1,0 +1,98 @@
+{
+  "tool": "Built-in image_gen",
+  "common": "Use case: stylized-concept. ONE standalone full-body Korean adult in their 20s. Reference image 1 is the approved FEMALE face/style master; reference image 2 is approved MALE face/style master. Use the relevant body silhouette but keep facial features IDENTICAL across characters: same small dark eyes slightly open with tiny sclera at corners, no shiny pupil highlights, same nose/mouth placement and calm natural expression. No cute large anime eyes. Match exactly the reference coarse square-pixel art, visible large logical pixels, thin dark ONE logical-pixel outline, ordinary adult body proportions with relatively small head. Full-body FRONT VIEW standing straight, arms relaxed down, centered on EXACT 1:2 canvas, target 887x1774 matching masters, complete hair and shoes inside generous transparent margins. TRUE transparent alpha background, no green fringe, shadow, floor, white border, letters or watermark. Deliberately MINIMAL DETAIL and only ONE flat shadow level. STRICTLY at most EIGHT flat opaque colors per character (reuse skin/cream, dark hair/outline, gray/navy/beige/khaki/denim colors as needed), muted natural colors. Coarse approx 80x160 logical pixels with sharp nearest-neighbor square pixel blocks. No antialiasing, gradients, blur, soft texture, realistic fabric, tiny stitching details, excess folds. No pastel-only scheme, ribbons, sparkles, stars, animal ears, decorative accessories unless explicitly listed. Hairstyle, hair color and outfit MUST change to specified character; do not retain reference hair or outfit. All characters share the SAME facial features. PNG.",
+  "characters": [
+    [
+      "g02",
+      "Woman with long straight BLACK hair reaching below the shoulders, NO bangs, white shirt under a navy cardigan, beige long skirt, loafers."
+    ],
+    [
+      "g03",
+      "Woman with dark brown medium bob with ends curled inward in a C perm, cream knit sweater, wide-leg denim jeans, sneakers."
+    ],
+    [
+      "g04",
+      "Woman with BLACK hair tied into one ponytail, BLACK zip-up hoodie, gray sweatpants, sneakers."
+    ],
+    [
+      "g05",
+      "Woman with hair in a top bun, thin round glasses, checked shirt, blue jeans, canvas shoes."
+    ],
+    [
+      "g06",
+      "Woman with short dark brown bob and bangs, striped T-shirt, cargo pants, sneakers."
+    ],
+    [
+      "g07",
+      "Woman with long hair HALF tied back, Korean school uniform: white shirt, NAVY tailored blazer, checked skirt, NECKTIE, black loafers. Not a sailor uniform, no bow or ribbon."
+    ],
+    [
+      "g08",
+      "Woman with shoulder-length BROWN wavy hair, beige trenchcoat, blue jeans, ankle boots."
+    ],
+    [
+      "g09",
+      "Woman with hair neatly tied back, Korean hanbok: muted subdued jeogori jacket and long chima skirt. No decorative headpiece, no flowers."
+    ],
+    [
+      "g10",
+      "Woman with black hair, BLACK long padded winter coat, gray scarf, blue jeans visible below coat, winter boots."
+    ],
+    [
+      "g11",
+      "Woman with tidy black hair, clean simple BLACK dress, small crossbody bag, flat shoes."
+    ],
+    [
+      "g12",
+      "Woman with hair loosely and casually tied back, matching checked pajama set with LONG sleeves and LONG trousers, slippers. No animal ears or cute decorations."
+    ],
+    [
+      "b02",
+      "Man with down-permed hair neatly PARTED at the side, gray crewneck sweatshirt, blue jeans, white sneakers. Hair differs from source two-block."
+    ],
+    [
+      "b03",
+      "Man with visibly SHORT cropped hair with short fringe, gray ZIP-UP hoodie (visible zipper), black jogger pants, sneakers."
+    ],
+    [
+      "b04",
+      "Man with DARK thick-rimmed glasses, checked shirt, blue jeans, canvas shoes."
+    ],
+    [
+      "b05",
+      "Man with medium-length straight bangs slightly covering the EYEBROWS, denim jacket, black tailored slacks, sneakers. Not spiky short hair."
+    ],
+    [
+      "b06",
+      "Man with short hair under a BLACK beanie, KHAKI windbreaker, cargo pants, sneakers."
+    ],
+    [
+      "b07",
+      "Man with short hair, Korean university department varsity baseball jacket, blue jeans, sneakers. No readable letters or logos."
+    ],
+    [
+      "b08",
+      "Man with NEAT combed hair, Korean school uniform: white shirt, NAVY blazer, necktie, GRAY trousers, BLACK dress shoes. No cap, no sailor outfit."
+    ],
+    [
+      "b09",
+      "Man with neat dark hair, Korean hanbok with muted subdued durumagi outer robe, traditional matching trousers and shoes."
+    ],
+    [
+      "b10",
+      "Man with short black hair, BLACK long padded winter coat, scarf, blue jeans visible under coat, winter boots."
+    ],
+    [
+      "b11",
+      "Man with neat black hair, NAVY business suit jacket and matching trousers, white shirt and necktie, dress shoes. No bow tie, no stars."
+    ],
+    [
+      "b12",
+      "Man with short black hair, GRAY matching sweatshirt and sweatpants training set, slippers."
+    ]
+  ],
+  "refinements": [
+    "g02: White button-up shirt with visible pointed collar under cardigan.",
+    "g05: Thin round glasses using stepped pixel outline."
+  ]
+}

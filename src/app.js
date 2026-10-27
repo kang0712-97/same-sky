@@ -7,7 +7,7 @@
   const MOONN = ['신월', '초승달', '상현달', '상현망', '보름달', '하현망', '하현달', '그믐달'];
   const SKYSET = { me: 'seoul', pt: 'ny' };
   const SIDES = ['me', 'pt'];
-  const DEMO_PARTNER = { slot: 'b', name: '무노', avatar: { char: 'boy' }, city: { name: '뉴욕', country: '미국', cc: 'US', lat: 40.71, lon: -74.01, tz: 'America/New_York' }, profile: null };
+  const DEMO_PARTNER = { slot: 'b', name: '무노', avatar: { char: 'b01' }, city: { name: '뉴욕', country: '미국', cc: 'US', lat: 40.71, lon: -74.01, tz: 'America/New_York' }, profile: null };
 
   /* ---------- 상태 ---------- */
   let S = null, L = { photos: [], notes: [] };
@@ -378,9 +378,11 @@
   function renderSetupAvatar() {
     const a = draft.avatar, tabs = $('avTabs'), panel = $('avPanel'); tabs.innerHTML = ''; panel.innerHTML = '';
     $('avPrev').src = Av.thumbUrl(a);
-    if (a.custom) avTab = 'char';
+    const simple = a.custom || Av.byId(a.char).v2;   // 완성형 캐릭터(새 24종)·내 사진 캐릭터는 고르기만
+    if (simple) avTab = 'char';
+    tabs.hidden = !!simple;
     AVTABS.forEach(([id, label]) => {
-      if (a.custom && id !== 'char') return;
+      if (simple && id !== 'char') return;
       const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.className = 'tab' + (avTab === id ? ' on' : ''); b.textContent = label;
       b.setAttribute('aria-selected', avTab === id); b.onclick = () => { avTab = id; renderSetupAvatar(); }; tabs.appendChild(b);
     });
@@ -402,8 +404,7 @@
     const accRow = () => { if ((a.head && a.head !== 'none') || a.scarf || (a.neck && a.neck !== 'none')) { const al = Av.SWATCH.accent, row = document.createElement('div'); row.className = 'crow'; row.innerHTML = '<span class="cl">소품색</span>'; al.forEach(c => { const s = document.createElement('button'); s.type = 'button'; s.className = 'sw2' + ((a.accent || al[0]) === c ? ' on' : ''); s.style.background = c; s.setAttribute('aria-label', c); s.onclick = () => { a.accent = c; renderSetupAvatar(); }; row.appendChild(s); }); panel.appendChild(row); } };
     const V = (o) => Av.headUrl({ ...a, ...o });
     if (avTab === 'char') {
-      title('캐릭터'); const g = grid();
-      Av.list().forEach(c => cell(g, c.name, Av.thumbUrl({ char: c.id }), !a.custom && a.char === c.id, () => { draft.avatar = { char: c.id, hair: null, top: null, bottom: null }; }));
+      [['f', '여자'], ['m', '남자']].forEach(([grp, label]) => { title(label); const g = grid(); Av.list().filter(c => c.group === grp).forEach(c => cell(g, c.name, Av.thumbUrl({ char: c.id }), !a.custom && Av.byId(a.char).id === c.id, () => { draft.avatar = { char: c.id, hair: null, top: null, bottom: null }; })); });
       if (a.custom) { const h = document.createElement('div'); h.className = 'hint'; h.textContent = '지금은 내가 만든 캐릭터예요. 위에서 고르면 꾸미기가 켜져요.'; panel.appendChild(h); }
     } else if (avTab === 'hair') {
       if (ch.hairStyles && ch.hairStyles.length > 1) { title('머리 모양'); const g = grid(); ch.hairStyles.forEach(s => cell(g, s.name, V({ hairStyle: s.id }), (a.hairStyle || ch.hairStyles[0].id) === s.id, () => { a.hairStyle = s.id; })); }
@@ -445,7 +446,7 @@
   function openSetup(isEdit) {
     editing = isEdit;
     const me = isEdit && S ? S.me : null;
-    draft = { avatar: me ? JSON.parse(JSON.stringify(me.avatar)) : { char: 'girl', hair: null, top: null, bottom: null }, profile: me ? me.profile : null, place: { cc: me ? me.city.cc : 'KR', city: me && me.city.isCapital === false ? me.city : null } };
+    draft = { avatar: me ? JSON.parse(JSON.stringify(me.avatar)) : { char: 'g01', hair: null, top: null, bottom: null }, profile: me ? me.profile : null, place: { cc: me ? me.city.cc : 'KR', city: me && me.city.isCapital === false ? me.city : null } };
     $('name').value = me ? me.name : '';
     $('country').value = draft.place.cc; $('city').value = draft.place.city ? draft.place.city.name : ''; $('cities').innerHTML = '';
     $('setupTitle').textContent = isEdit ? '내 정보 수정' : '먼저 내 정보를 등록해요'; $('setupErr').textContent = ''; $('prev').hidden = true;
