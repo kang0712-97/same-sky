@@ -1,6 +1,6 @@
 (function () {
   const BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
-  const A = window.SS_ASSETS, Geo = window.SSGeo, Av = window.SSAvatar, Remote = window.SSApi, Globe = window.SSGlobe;
+  const A = window.SS_ASSETS, Geo = window.SSGeo, Av = window.SSAvatar, Remote = window.SSApi, Globe = window.SSGlobe, Room = window.SSRoom;
   const $ = id => document.getElementById(id);
   const KEY = 'samesky.v2', LKEY = 'samesky.v2.local';
   const KL = { night: '맑음 · 밤', clear: '맑음', cloudy: '흐림', rain: '비', sunset: '노을', snow: '눈' };
@@ -16,7 +16,7 @@
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
   const saveL = () => { try { localStorage.setItem(LKEY, JSON.stringify(L)); } catch (e) { toast('저장 공간이 부족해요'); } };
   const W = { me: { kind: 'clear', temp: '-' }, pt: { kind: 'night', temp: '-' } };
-  let D = { partner: null, photos: [], notes: [] };
+  let D = { partner: null, photos: [], notes: [], rooms: { me: null, pt: null } };
   const invite = (() => {   // 초대 링크(?code=XXXXXX)로 들어왔는지
     let c = ''; try { c = (new URLSearchParams(location.search).get('code') || '').trim().toUpperCase(); } catch (e) { }
     if (c) { try { history.replaceState(null, '', location.pathname); } catch (e) { } }
@@ -39,7 +39,9 @@
     async listPhotos() { return JSON.parse(JSON.stringify(L.photos)); },   // 복사본을 돌려줘야 변경 감지가 동작
     async addNote(code, slot, n) { L.notes.unshift({ id: 'l' + Date.now(), slot, body: n.body, x: n.x, y: n.y, created_at: new Date().toISOString() }); saveL(); },
     async listNotes() { return JSON.parse(JSON.stringify(L.notes)); },
-    async getState() { return { p: L.photos.length + ':' + L.photos.reduce((s, x) => s + (x.hearts || []).length, 0), n: L.notes.length }; }
+    async getRooms() { const r = L.rooms || {}; return [{ slot: S.slot, room: r[S.slot] || S.room || null }, { slot: otherSlot(), room: r[otherSlot()] || Room.demoRoom() }].filter(x => x.room); },
+    async saveRoom(code, slot, room) { (L.rooms || (L.rooms = {}))[slot] = room; saveL(); },
+    async getState() { return { p: L.photos.length + ':' + L.photos.reduce((s, x) => s + (x.hearts || []).length, 0), n: L.notes.length, r: JSON.stringify(L.rooms || {}) }; }
   };
   const api = () => S && S.mode === 'local' ? localApi : Remote;
 
@@ -239,8 +241,12 @@
       const sig = (p2, ph2, nt2) => JSON.stringify([p2, ph2.map(p => p.id + ':' + (p.hearts || []).join('')), nt2.map(n => n.id)]);
       const changed = sig(pt, ph, nt) !== sig(D.partner, D.photos, D.notes);
       const hadPt = !!D.partner;
-      D = { partner: pt, photos: ph, notes: nt };
+      let rooms = D.rooms;   // 방은 서버에 아직 없어도(스키마 미적용) 나머지 기능이 멈추면 안 되므로 따로 받음
+      try { const rl = await api().getRooms(S.code); rooms = { me: null, pt: null }; (rl || []).forEach(x => { if (x && (x.slot === 'a' || x.slot === 'b')) rooms[x.slot === S.slot ? 'me' : 'pt'] = Room.sanitize(x.room); }); } catch (e) { }
+      const roomChanged = JSON.stringify(rooms) !== JSON.stringify(D.rooms);
+      D = { partner: pt, photos: ph, notes: nt, rooms };
       notifyArrivals();
+      if (roomChanged && !roomEditing) drawRoom();
       if (changed || !quiet) { paint(); if (!hadPt && pt) real(); drawPhotos(); drawNotesBox(); }
     } catch (e) { if (!quiet) toast(explain(e)); }
   }
@@ -491,6 +497,44 @@
 
   /* ---------- 홈 ---------- */
   let started = false;
+  /* ---------- 내 방 ---------- */
+  let roomTab = 'me', roomEditing = false, roomView = null, roomTimer = 0, roomSaveFail = false;
+  const myRoom = () => D.rooms.me || (S.room && Room.sanitize(S.room)) || Room.emptyRoom();
+  function drawRoom() {
+    const mine = roomTab === 'me', r = mine ? myRoom() : D.rooms.pt, st = $('rstage');
+    if (!$('v-room').classList.contains('on')) return;
+    roomView = Room.mount(st, { room: r || Room.emptyRoom(), editable: mine, onChange: mine ? saveRoomSoon : null, onSelect: mine ? paintSel : null });
+    $('tabRMe').classList.toggle('on', mine); $('tabRPt').classList.toggle('on', !mine);
+    $('rtools').hidden = !mine; $('rsel').hidden = true;
+    const who = mine ? S.me.name : (D.partner ? D.partner.name : '상대');
+    $('roomTitle').textContent = mine ? '내 방' : who + '의 방';
+    $('roomEmpty').textContent = !mine && !(r && r.items.length) ? who + '의 방은 아직 비어 있어요.' : '';
+    $('roomEmpty').style.display = $('roomEmpty').textContent ? 'block' : 'none';
+  }
+  function paintSel(it) { $('rsel').hidden = !it; if (it) $('rselName').textContent = Room.DEFS[it.t][0] + ' 선택됨'; }
+  function saveRoomSoon(room) {   // 끌기를 멈추고 0.8초 뒤 저장 (서버 호출 줄이기)
+    roomEditing = true; D.rooms.me = Room.sanitize(room);
+    if (S.mode !== 'local') { S.room = D.rooms.me; save(); }   // 서버가 못 받아도 이 기기엔 남김
+    clearTimeout(roomTimer);
+    roomTimer = setTimeout(async () => {
+      try { await api().saveRoom(S.code, S.slot, D.rooms.me); roomSaveFail = false; }
+      catch (e) { if (!roomSaveFail) toast(e.code === 'no_schema' ? '방 저장 기능이 서버에 아직 없어요 (관리자: schema.sql 다시 실행). 이 기기에는 저장됐어요.' : explain(e)); roomSaveFail = true; }
+      roomEditing = false;
+    }, 800);
+  }
+  function openRoom(tab) { roomTab = tab || 'me'; view('v-room'); drawRoom(); }
+  function buildPalette() {
+    const pal = $('rpal');
+    Room.TYPES.forEach(t => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'rcell';
+      const im = document.createElement('img'); im.src = Room.sprite(t); im.alt = '';
+      const sp = document.createElement('span'); sp.textContent = Room.DEFS[t][0];
+      b.appendChild(im); b.appendChild(sp);
+      b.onclick = () => { if (roomView && !roomView.add(t)) toast('가구는 ' + Room.MAX_ITEMS + '개까지 놓을 수 있어요'); };
+      pal.appendChild(b);
+    });
+  }
+
   function startHome() {
     if (!started) {
       mk($('st-me')); mk($('st-pt')); mk($('st-town'));
@@ -562,6 +606,12 @@
   $('tabPt').onclick = () => { townSide = 'pt'; paintTown(); }; $('tabMe').onclick = () => { townSide = 'me'; paintTown(); markNotesSeen(); };
   $('back').onclick = () => view('v-home');
   $('addNote').onclick = addNote; enterKey($('noteIn'), addNote);
+  $('goRoom').onclick = () => openRoom('me'); $('backR').onclick = () => view('v-home');
+  $('tabRMe').onclick = () => { roomTab = 'me'; drawRoom(); }; $('tabRPt').onclick = () => { roomTab = 'pt'; drawRoom(); };
+  $('rFlip').onclick = () => roomView && roomView.flip(); $('rDel').onclick = () => roomView && roomView.remove();
+  $('rWall').onclick = () => roomView && roomView.theme('wall', 1); $('rFloor').onclick = () => roomView && roomView.theme('floor', 1);
+  $('rClear').onclick = () => { if (roomView && roomView.room.items.length && confirm('방의 가구를 모두 치울까요?')) roomView.clear(); };
+  document.addEventListener('keydown', e => { if ((e.key === 'Delete' || e.key === 'Backspace') && roomView && $('v-room').classList.contains('on') && roomTab === 'me' && !/INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) { e.preventDefault(); roomView.remove(); } });
   $('goPhotos').onclick = () => { drawPhotos(); view('v-photos'); markPhotosSeen(); }; $('backP').onclick = () => view('v-home');
   $('goNotes').onclick = () => { drawNotesBox(); view('v-notes'); markNotesSeen(); }; $('backN').onclick = () => view('v-home');
   $('tabIn').onclick = () => { notesTab = 'in'; drawNotesBox(); }; $('tabOut').onclick = () => { notesTab = 'out'; drawNotesBox(); };
@@ -586,7 +636,7 @@
   });
 
   /* ---------- 시작 ---------- */
-  Globe.attach($('globe')); initRegions();
+  Globe.attach($('globe')); initRegions(); buildPalette();
   setInterval(clock, 1000);
   let lastState = '';
   async function poll() {   // 숨겨진 탭에서는 멈추고, 바뀐 게 있을 때만 전체를 다시 받음

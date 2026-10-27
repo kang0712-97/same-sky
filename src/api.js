@@ -24,6 +24,8 @@
     getState: code => rpc('ss_state', { p_code: code }),
     heartPhoto: (code, id, slot) => rpc('ss_heart_photo', { p_code: code, p_photo_id: id, p_slot: slot }),
     addNote: (code, slot, n) => rpc('ss_add_note', { p_code: code, p_slot: slot, p_body: n.body, p_x: n.x, p_y: n.y }),
-    listNotes: code => rpc('ss_list_notes', { p_code: code })
+    listNotes: code => rpc('ss_list_notes', { p_code: code }),
+    getRooms: code => rpc('ss_get_rooms', { p_code: code }),
+    saveRoom: (code, slot, room) => rpc('ss_save_room', { p_code: code, p_slot: slot, p_room: room })
   };
 })();

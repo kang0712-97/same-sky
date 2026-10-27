@@ -202,3 +202,21 @@ img.th{width:76px;height:76px;object-fit:cover;border:3px solid var(--ink);curso
 .ocell.on{background:#fff;box-shadow:3px 3px 0 var(--ink)}
 #avPanel .cl{display:block;font-size:11px;margin:6px 0 3px}
 .ocell:focus-visible,.tab:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+/* 내 방 */
+.rstage{--u:4px;position:relative;width:100%;max-width:640px;margin:0 auto;aspect-ratio:160/100;overflow:hidden;border-left:4px solid var(--ink);border-right:4px solid var(--ink);background:#000;touch-action:none;user-select:none}
+.rbg,.rlayer{position:absolute;inset:0}.rlayer{overflow:hidden}
+.rwall{position:absolute;left:0;top:0;width:100%;height:58%;box-sizing:border-box;background-image:repeating-linear-gradient(90deg,rgba(31,36,32,.07) 0 calc(var(--u)*1),transparent calc(var(--u)*1) calc(var(--u)*10));border-bottom:calc(var(--u)*2) solid var(--ink)}
+.rfloor{position:absolute;left:0;top:58%;width:100%;bottom:0;background-image:repeating-linear-gradient(0deg,rgba(31,36,32,.12) 0 calc(var(--u)*1),transparent calc(var(--u)*1) calc(var(--u)*8))}
+.ritem{position:absolute;image-rendering:pixelated;display:block}
+.rstage.edit .ritem{cursor:grab;touch-action:none}.rstage.edit .ritem:active{cursor:grabbing}
+.ritem.sel{outline:calc(var(--u)*1) dashed var(--ink);outline-offset:calc(var(--u)*1);animation:rsel .8s steps(1) infinite}
+@keyframes rsel{50%{outline-color:#fff}}
+.rtools{max-width:640px;margin:0 auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;border-top:4px solid var(--ink)}
+.rpal{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+.rcell{border:3px solid var(--ink);background:var(--paper);padding:4px 2px 2px;font-family:inherit;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink)}
+.rcell:hover{background:#fffaf0}.rcell:active{transform:translate(2px,2px)}
+.rcell canvas,.rcell img{image-rendering:pixelated;width:40px;height:32px;object-fit:contain}
+.rsel,.rrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.rsel{background:var(--ink);color:var(--paper);padding:6px 10px}.rsel .btn{color:var(--ink)}
+.rcell:focus-visible{outline:3px solid var(--ink);outline-offset:2px}

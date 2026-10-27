@@ -69,7 +69,8 @@ pkill -f "http.server 8123"
 등록 화면 아바타가 탭형(캐릭터/머리/얼굴/옷/소품) + 썸네일 격자. 새 옵션(전부 코드로 그림, `src/avatar.js` render): 입 5종, 볼터치/주근깨/점, 안경 3종, 목 소품(초커·나비넥타이·목걸이), 머리 소품(왕관·토끼귀·꽃핀·천사링). 얼굴 위치는 manifest의 `anchors.face`. avatar JSON에 `mouth/cheek/glasses(문자열)/neck` 키 추가(DB는 jsonb라 스키마 변경 없음).
 **직접 만들기 캐릭터**(`src/builder.js`): 기존 2종(색만 변경) 외에 부품 조립형. 얼굴형3·머리9·눈4·눈썹4·수염4·피부색6·상의4·하의3을 픽셀 지도(왼쪽 11칸만 적고 거울 복사)로 그림 → `avatar.js render()`가 기존 색 바꾸기·소품·얼굴 오버레이를 그대로 적용(builder는 bbox 고정 원점 44,42). manifest의 `builder:true` 캐릭터, 앵커는 girl 것을 복사. 부품 추가는 builder.js의 HAIR/TOPS/EYES 등에 지도만 추가 + `Av.OPT` 목록에 이름 추가.
 **AI 사진 변환**: `api/pixelize.js`(Vercel 함수) → OpenAI images/edits. 키는 Vercel 환경변수 `OPENAI_API_KEY`(없으면 503 no_key → 앱이 기본 변환으로 대체). 선택 환경변수 `OPENAI_IMAGE_MODEL`(기본 gpt-image-1), `OPENAI_IMAGE_QUALITY`(기본 medium). IP당 시간당 6회(인스턴스 메모리라 느슨함 → OpenAI 콘솔에 월 한도 필수). 등록 화면 '내 이미지로…' 안의 'AI로 도트 변환' 체크박스. Pages에서는 Vercel 주소로 호출.
-**다음 작업(사용자 확정)**: '내 방' — 자유 배치(드래그), 상대 방 구경 가능(서버 저장 → schema.sql 변경, 사용자가 SQL Run 필요), 도트 스타일 유지.
+**내 방 구현됨(2026-10-27)**: `src/room.js`(160×100 칸, 가구 16종 코드로 그림·윤곽선 자동·끌어서 배치·벽/바닥색), 홈의 '⌂ 내 방' 버튼 → `v-room`(내 방/상대 방 구경 탭). 서버는 `ss_rooms` 테이블+`ss_save_room/ss_get_rooms` RPC+`ss_state`에 rooms 추가 → **schema.sql 전체 재실행 필요(167줄, `ss_save_room` 검색)**. 미적용이면 방은 이 기기에만 저장되고 토스트로 안내. 체험 모드는 상대 방 예시(`demoRoom`).
+(이전 메모) '내 방' — 자유 배치(드래그), 상대 방 구경 가능(서버 저장 → schema.sql 변경, 사용자가 SQL Run 필요), 도트 스타일 유지.
 
 ## 6. 남은 일 (3단계 후보, 우선순위 순 제안)
 감수에서 나온 것 중 미착수. **사용자에게 어느 것부터 할지 먼저 묻는다.**

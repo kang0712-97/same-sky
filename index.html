@@ -94,7 +94,7 @@
      <div style="font-size:13px;font-weight:bold" id="route"></div>
      <div style="font-size:13px" id="moonTxt"></div>
      <div class="btns big"><button class="btn p" id="goTown">▶ 상대 동네 가보기</button><button class="btn" id="photo">▣ 오늘의 사진 보내기 (0/3)</button></div>
-     <div class="btns"><button class="btn" id="goPhotos">사진함</button><button class="btn" id="goNotes">쪽지함</button></div>
+     <div class="btns"><button class="btn" id="goRoom">⌂ 내 방</button><button class="btn" id="goPhotos">사진함</button><button class="btn" id="goNotes">쪽지함</button></div>
     </div>
    </div>
   </div>
@@ -119,6 +119,20 @@
    <div class="head"><b>쪽지함</b><button class="btn small" id="backN">◀ 돌아가기</button></div>
    <div class="tabs"><button class="tab on" id="tabIn">받은 쪽지</button><button class="tab" id="tabOut">보낸 쪽지</button></div>
    <div class="list" id="noteList"></div>
+  </div>
+
+  <!-- 7. 내 방 -->
+  <div class="view town" id="v-room">
+   <div class="head"><b id="roomTitle">내 방</b><button class="btn small" id="backR">◀ 돌아가기</button></div>
+   <div class="tabs"><button class="tab on" id="tabRMe">내 방</button><button class="tab" id="tabRPt">상대 방 구경</button></div>
+   <div class="rstage" id="rstage"></div>
+   <div class="emptyhint" id="roomEmpty"></div>
+   <div class="rtools" id="rtools">
+    <div class="rsel" id="rsel" hidden><span id="rselName"></span><button class="btn small" id="rFlip" type="button">↔ 뒤집기</button><button class="btn small" id="rDel" type="button">✕ 치우기</button></div>
+    <div class="rpal" id="rpal"></div>
+    <div class="rrow"><span>벽</span><button class="btn small" id="rWall" type="button">색 바꾸기</button><span>바닥</span><button class="btn small" id="rFloor" type="button">색 바꾸기</button><button class="btn small" id="rClear" type="button">방 비우기</button></div>
+    <div class="hint" id="rhint">가구를 눌러 놓고, 끌어서 옮겨요. 자동으로 저장돼요.</div>
+   </div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -159,6 +173,7 @@
 <script src="src/builder.js"></script>
 <script src="src/avatar.js"></script>
 <script src="src/api.js"></script>
+<script src="src/room.js"></script>
 <script src="src/app.js"></script>
 </body>
 </html>

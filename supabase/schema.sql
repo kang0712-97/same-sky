@@ -124,15 +124,44 @@ begin
   if not found then raise exception 'no_photo'; end if;
 end $$;
 
+-- 내 방 (가구 배치). 한 사람당 한 행, 통째로 저장
+create table if not exists ss_rooms (
+  code text not null references ss_couples(code) on delete cascade,
+  slot text not null check (slot in ('a','b')),
+  room jsonb not null,
+  updated_at timestamptz not null default now(),
+  primary key (code, slot)
+);
+alter table ss_rooms enable row level security;
+revoke all on ss_rooms from anon, authenticated;
+
+create or replace function ss_save_room(p_code text, p_slot text, p_room jsonb) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from ss_couples where code = upper(p_code)) then raise exception 'no_couple'; end if;
+  if p_slot not in ('a','b') then raise exception 'bad_slot'; end if;
+  if jsonb_typeof(p_room) <> 'object' or length(p_room::text) > 6000 then raise exception 'too_big'; end if;
+  if jsonb_typeof(p_room->'items') <> 'array' or jsonb_array_length(p_room->'items') > 30 then raise exception 'too_big'; end if;
+  insert into ss_rooms(code, slot, room) values (upper(p_code), p_slot, p_room)
+  on conflict (code, slot) do update set room = excluded.room, updated_at = now();
+end $$;
+
+create or replace function ss_get_rooms(p_code text) returns json
+language sql security definer set search_path = public as $$
+  select coalesce(json_agg(json_build_object('slot', slot, 'room', room)), '[]'::json) from ss_rooms where code = upper(p_code);
+$$;
+
 -- 가벼운 변경 감지용 (클라이언트가 40초마다 이것만 확인하고, 바뀐 때만 전체를 받음)
 create or replace function ss_state(p_code text) returns json
 language sql security definer set search_path = public as $$
   select json_build_object(
     'members', (select coalesce(max(updated_at)::text, '') from ss_members where code = upper(p_code)),
     'photos',  (select count(*)::text || coalesce(sum(cardinality(hearts))::text, '0') || coalesce(max(taken_at)::text, '') from ss_photos where code = upper(p_code)),
-    'notes',   (select count(*)::text || coalesce(max(created_at)::text, '') from ss_notes where code = upper(p_code)));
+    'notes',   (select count(*)::text || coalesce(max(created_at)::text, '') from ss_notes where code = upper(p_code)),
+    'rooms',   (select coalesce(max(updated_at)::text, '') from ss_rooms where code = upper(p_code)));
 $$;
 
 grant execute on function ss_state(text), ss_heart_photo(text,uuid,text) to anon;
 grant execute on function ss_create_couple(), ss_get_couple(text), ss_save_member(text,text,text,jsonb,jsonb,text),
   ss_add_photo(text,text,text,text,text,text), ss_list_photos(text,int), ss_add_note(text,text,text,real,real), ss_list_notes(text) to anon;
+grant execute on function ss_save_room(text,text,jsonb), ss_get_rooms(text) to anon;
