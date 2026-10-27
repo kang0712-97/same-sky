@@ -17,6 +17,11 @@
   const saveL = () => { try { localStorage.setItem(LKEY, JSON.stringify(L)); } catch (e) { toast('저장 공간이 부족해요'); } };
   const W = { me: { kind: 'clear', temp: '-' }, pt: { kind: 'night', temp: '-' } };
   let D = { partner: null, photos: [], notes: [] };
+  const invite = (() => {   // 초대 링크(?code=XXXXXX)로 들어왔는지
+    let c = ''; try { c = (new URLSearchParams(location.search).get('code') || '').trim().toUpperCase(); } catch (e) { }
+    if (c) { try { history.replaceState(null, '', location.pathname); } catch (e) { } }
+    return /^[0-9A-F]{4,8}$/.test(c) ? c : '';
+  })();
   let draft = null, townSide = 'pt', notesTab = 'in', editing = false, pending = null, pendingMe = null;
   const otherSlot = () => S.slot === 'a' ? 'b' : 'a';
 
@@ -411,7 +416,10 @@
     const city = draft.place.city ? { name: draft.place.city.name, country: cn.name, cc: cn.cc, lat: draft.place.city.lat, lon: draft.place.city.lon, tz: draft.place.city.tz, isCapital: false } : { ...Geo.capitalOf(cn.cc), isCapital: true };
     const me = { name, avatar: draft.avatar, city, profile: draft.profile };
     if (editing && S) { S.me = me; save(); api().saveMember(S.code, S.slot, me).catch(() => toast('내 정보를 서버에 저장하지 못했어요. 상대 화면에는 이전 정보가 보일 수 있어요.')); startHome(); }
-    else { pendingMe = me; $('connErr').textContent = ''; view('v-connect'); }
+    else {
+      pendingMe = me; $('connErr').textContent = ''; view('v-connect');
+      if (invite) { $('joinCode').value = invite; $('inviteHint').hidden = false; }
+    }
   }
   async function onUpload(file) {
     try {
@@ -511,7 +519,11 @@
   $('cCreate').onclick = connectCreate; $('cJoin').onclick = connectJoin; $('cDemo').onclick = connectDemo;
   enterKey($('joinCode'), connectJoin);
   $('cBack').onclick = () => view('v-setup');
-  $('codeBtn').onclick = () => { try { navigator.clipboard.writeText(S.code); toast('코드를 복사했어요: ' + S.code); } catch (e) { toast('코드: ' + S.code); } };
+  $('codeBtn').onclick = async () => {   // 초대 링크 공유: 공유창이 있으면 그걸로, 없으면 복사
+    const url = location.origin + location.pathname + '?code=' + S.code, text = '같은 하늘에서 만나요! 링크를 열면 코드가 자동으로 입력돼요 (코드 ' + S.code + ')';
+    try { if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) { await navigator.share({ title: 'Same Sky', text, url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(url); toast('초대 링크를 복사했어요'); } catch (e) { toast('초대 링크: ' + url); }
+  };
   $('copyWait').onclick = $('codeBtn').onclick;
   $('goTown').onclick = () => { townSide = 'pt'; paintTown(); view('v-town'); };
   $('tabPt').onclick = () => { townSide = 'pt'; paintTown(); }; $('tabMe').onclick = () => { townSide = 'me'; paintTown(); markNotesSeen(); };
@@ -554,5 +566,5 @@
   setInterval(() => { if (S) real(); }, 10 * 60 * 1000);
   Geo.COUNTRIES.forEach(c => { const o = document.createElement('option'); o.value = c.cc; o.textContent = c.name; $('country').appendChild(o); });
   if (S && S.me && S.me.city) S.me.city = cleanCity(S.me.city);
-  Av.load().then(() => { if (S && S.me) startHome(); else openSetup(false); });
+  Av.load().then(() => { if (S && S.me) { startHome(); if (invite && invite !== S.code) toast('이 기기는 이미 등록돼 있어요. 새로 연결하려면 정보 초기화 후 다시 열어 주세요.'); } else openSetup(false); });
 })();

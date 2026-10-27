@@ -13,7 +13,7 @@
 
 <div class="desk" id="desk">
  <div class="ss">
-  <div class="bar"><span class="dot f"></span><span class="dot"></span><span class="dot"></span><span style="flex:1;text-align:center;letter-spacing:3px">SAME SKY</span><button class="mini" id="codeBtn" hidden>코드</button><button class="mini" id="editMe" hidden>내 정보</button><span style="font-size:13px" id="live">…</span></div>
+  <div class="bar"><span class="dot f"></span><span class="dot"></span><span class="dot"></span><span style="flex:1;text-align:center;letter-spacing:3px">SAME SKY</span><button class="mini" id="codeBtn" hidden>초대</button><button class="mini" id="editMe" hidden>내 정보</button><span style="font-size:13px" id="live">…</span></div>
 
   <!-- 1. 내 정보 등록 -->
   <div class="view" id="v-setup">
@@ -64,11 +64,12 @@
     <div class="hint">서로 각자의 정보만 등록하고, 아래 코드로 연결돼요.</div>
     <fieldset>
      <legend>내가 먼저 시작</legend>
-     <div class="hint">코드가 만들어져요. 그 코드를 상대에게 알려 주세요.</div>
+     <div class="hint">코드가 만들어져요. 시작하면 상대에게 보낼 초대 링크도 생겨요.</div>
      <button class="btn p" id="cCreate" type="button">새 코드 만들기</button>
     </fieldset>
     <fieldset>
      <legend>상대가 만든 코드가 있어요</legend>
+     <div class="hint" id="inviteHint" hidden>초대 링크로 오셨네요! 코드가 입력돼 있어요. 입장만 누르면 돼요.</div>
      <div class="srch"><input id="joinCode" maxlength="8" placeholder="코드 입력 (예: 3FA9C1)" style="text-transform:uppercase"><button class="btn small" id="cJoin" type="button">입장</button></div>
      <div class="inl" id="slotRow" hidden>내 자리 <select id="slotPick"><option value="a">처음 만든 사람</option><option value="b">초대받은 사람</option></select></div>
     </fieldset>
@@ -83,7 +84,7 @@
     <div class="badge" id="diff">시차</div>
     <div class="pane"><div id="st-me"></div><div class="plate"><div class="who"><img id="pf-me" class="pf" hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><div><b id="n-me">나</b><div class="sub"><img id="moonIcon" alt="" style="width:15px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><span id="w-me"></span></div></div></div><div class="t" id="t-me">--:--</div></div></div>
     <div class="pane" style="position:relative"><div id="st-pt"></div>
-     <div class="wait" id="wait" hidden><div>상대를 기다리는 중이에요</div><div>코드 <b id="waitCode"></b></div><button class="btn small" id="copyWait" type="button">코드 복사</button></div>
+     <div class="wait" id="wait" hidden><div>상대를 기다리는 중이에요</div><div>코드 <b id="waitCode"></b></div><button class="btn small" id="copyWait" type="button">초대 링크 보내기</button></div>
      <div class="plate"><div class="who"><img id="pf-pt" class="pf" hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><div><b id="n-pt">상대</b><div class="sub"><span id="w-pt"></span></div></div></div><div class="t" id="t-pt">--:--</div></div></div>
    </div>
    <button class="news" id="news" type="button" hidden></button>
