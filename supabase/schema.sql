@@ -67,6 +67,10 @@ create or replace function ss_save_member(p_code text, p_slot text, p_name text,
 language plpgsql security definer set search_path = public as $$
 begin
   if not exists (select 1 from ss_couples where code = upper(p_code)) then raise exception 'no_couple'; end if;
+  if p_slot not in ('a','b') then raise exception 'bad_slot'; end if;
+  if length(p_avatar::text) > 30000 then raise exception 'too_big'; end if;
+  if p_profile is not null and (length(p_profile) > 30000 or p_profile !~ '^data:image/png;base64,[A-Za-z0-9+/=]+$') then raise exception 'bad_profile'; end if;
+  if (p_city->>'lat')::float not between -90 and 90 or (p_city->>'lon')::float not between -180 and 180 or char_length(p_city->>'name') not between 1 and 60 then raise exception 'bad_city'; end if;
   insert into ss_members(code, slot, name, avatar, city, profile) values (upper(p_code), p_slot, p_name, p_avatar, p_city, p_profile)
   on conflict (code, slot) do update set name = excluded.name, avatar = excluded.avatar, city = excluded.city, profile = excluded.profile, updated_at = now();
 end $$;
@@ -77,6 +81,8 @@ declare n int; new_id uuid;
 begin
   if not exists (select 1 from ss_couples where code = upper(p_code)) then raise exception 'no_couple'; end if;
   if length(p_data) > 700000 then raise exception 'too_big'; end if;
+  if p_local_date !~ '^\d{4}-\d{2}-\d{2}$' then raise exception 'bad_date'; end if;
+  if p_data !~ '^data:image/(jpeg|png);base64,[A-Za-z0-9+/=]+$' then raise exception 'bad_image'; end if;
   select count(*) into n from ss_photos where code = upper(p_code) and slot = p_slot and local_date = p_local_date;
   if n >= 3 then raise exception 'limit'; end if;
   insert into ss_photos(code, slot, local_date, caption, weather, data) values (upper(p_code), p_slot, p_local_date, left(p_caption, 40), left(p_weather, 40), p_data) returning id into new_id;
@@ -87,7 +93,7 @@ create or replace function ss_list_photos(p_code text, p_limit int default 60) r
 language sql security definer set search_path = public as $$
   select coalesce(json_agg(t), '[]'::json) from (
     select id, slot, local_date, caption, weather, data, taken_at from ss_photos
-    where code = upper(p_code) order by taken_at desc limit least(p_limit, 120)
+    where code = upper(p_code) order by taken_at desc limit least(p_limit, 60)
   ) t;
 $$;
 
@@ -96,7 +102,7 @@ language plpgsql security definer set search_path = public as $$
 declare new_id uuid;
 begin
   if not exists (select 1 from ss_couples where code = upper(p_code)) then raise exception 'no_couple'; end if;
-  insert into ss_notes(code, slot, body, x, y) values (upper(p_code), p_slot, left(p_body, 60), p_x, p_y) returning id into new_id;
+  insert into ss_notes(code, slot, body, x, y) values (upper(p_code), p_slot, left(p_body, 60), greatest(0, least(100, p_x)), greatest(0, least(100, p_y))) returning id into new_id;
   return new_id;
 end $$;
 
@@ -107,5 +113,15 @@ language sql security definer set search_path = public as $$
   ) t;
 $$;
 
+-- 가벼운 변경 감지용 (클라이언트가 40초마다 이것만 확인하고, 바뀐 때만 전체를 받음)
+create or replace function ss_state(p_code text) returns json
+language sql security definer set search_path = public as $$
+  select json_build_object(
+    'members', (select coalesce(max(updated_at)::text, '') from ss_members where code = upper(p_code)),
+    'photos',  (select count(*)::text || coalesce(max(taken_at)::text, '') from ss_photos where code = upper(p_code)),
+    'notes',   (select count(*)::text || coalesce(max(created_at)::text, '') from ss_notes where code = upper(p_code)));
+$$;
+
+grant execute on function ss_state(text) to anon;
 grant execute on function ss_create_couple(), ss_get_couple(text), ss_save_member(text,text,text,jsonb,jsonb,text),
   ss_add_photo(text,text,text,text,text,text), ss_list_photos(text,int), ss_add_note(text,text,text,real,real), ss_list_notes(text) to anon;

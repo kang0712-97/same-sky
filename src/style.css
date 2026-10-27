@@ -151,3 +151,31 @@ img.th{width:76px;height:76px;object-fit:cover;border:3px solid var(--ink);curso
 .chip{font-family:inherit;font-size:12px;border:2px solid var(--ink);background:var(--paper);color:var(--ink);padding:4px 9px;cursor:pointer}
 .chip:hover{background:var(--ink);color:var(--paper)}
 .chip.on{background:var(--ink);color:var(--paper)}
+
+/* 밤 베일: 흐림·비·눈이어도 밤이면 하늘을 어둡게 */
+.stage .veil{background:rgba(27,31,74,.55);display:none;pointer-events:none}
+
+/* 모바일: 하늘을 위아래로 쌓고, 정보판은 세로 배치 */
+@media (max-width:560px){
+  body{padding:10px 6px}
+  .desk{padding:8px;border-width:3px;border-radius:8px}
+  .ss{border-width:3px;border-radius:8px;box-shadow:4px 4px 0 var(--ink)}
+  .bar .dot{display:none}.bar{padding:8px 10px}.mini{white-space:nowrap}
+  .twin{flex-direction:column}
+  .twin>.pane:nth-child(2){order:1}.twin>.badge{order:2}.twin>.pane:nth-child(3){order:3}
+  .badge{position:static;transform:none;width:auto;box-shadow:none;border-width:3px 0;text-align:center;padding:6px}
+  .pane+.pane{border-left:0}
+  .plate{flex-direction:row;align-items:center;gap:8px}
+  .plate .t{font-size:22px;white-space:nowrap}.plate b{white-space:nowrap}
+  .plate .sub{flex-wrap:wrap}
+  .stage{aspect-ratio:110/100}
+  .wait{aspect-ratio:110/100}
+  .foot{gap:10px}
+  .btns .btn{min-width:0}
+  .btns.big{flex-direction:column}.btns.big .btn{flex:none}
+  .row2 .btn{min-width:0;flex:1}
+  .setup{padding:12px}
+  .cols>div{padding:8px}
+  .demo,.regions{margin:14px 6px 0}
+  .tab{font-size:12px;padding:10px 4px}
+}

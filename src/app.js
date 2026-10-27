@@ -30,7 +30,8 @@
     },
     async listPhotos() { return L.photos; },
     async addNote(code, slot, n) { L.notes.unshift({ id: 'l' + Date.now(), slot, body: n.body, x: n.x, y: n.y, created_at: new Date().toISOString() }); saveL(); },
-    async listNotes() { return L.notes; }
+    async listNotes() { return L.notes; },
+    async getState() { return { p: L.photos.length, n: L.notes.length }; }
   };
   const api = () => S && S.mode === 'local' ? localApi : Remote;
   function explain(e) {
@@ -43,7 +44,7 @@
   /* ---------- 장면 ---------- */
   function mk(el) {
     el.className = 'stage';
-    el.innerHTML = '<img class="L bg" alt="" src="' + BLANK + '"><div class="L stars"><img class="L sa" alt="" src="' + BLANK + '"><img class="L sb" alt="" src="' + BLANK + '"></div><img class="L moon" alt="" src="' + BLANK + '"><div class="L drift"><div class="in"></div></div><img class="L shadow" alt="" src="' + BLANK + '"><img class="L char" alt="" src="' + BLANK + '"><div class="L precip"><div class="in"></div></div><div class="bubble"></div><div class="notes"></div>';
+    el.innerHTML = '<img class="L bg" alt="" src="' + BLANK + '"><div class="L veil"></div><div class="L stars"><img class="L sa" alt="" src="' + BLANK + '"><img class="L sb" alt="" src="' + BLANK + '"></div><img class="L moon" alt="" src="' + BLANK + '"><div class="L drift"><div class="in"></div></div><img class="L shadow" alt="" src="' + BLANK + '"><img class="L char" alt="" src="' + BLANK + '"><div class="L precip"><div class="in"></div></div><div class="bubble"></div><div class="notes"></div>';
     el.querySelector('.sa').src = A.starsA; el.querySelector('.sb').src = A.starsB; el.querySelector('.shadow').src = A.shadow;
   }
   function person(side) { return side === 'me' ? S.me : D.partner; }
@@ -51,6 +52,7 @@
   function apply(el, side) {
     const p = person(side), k = W[side].kind, night = k === 'night';
     el.querySelector('.bg').src = A.bg[k][SKYSET[side]];
+    el.querySelector('.veil').style.display = (W[side].night && k !== 'night') ? 'block' : 'none';   // 밤에 흐림·비·눈이어도 밤 하늘로
     const ch = el.querySelector('.char'), sh = el.querySelector('.shadow');
     if (p) { ch.src = Av.layerUrl(p.avatar); ch.style.display = sh.style.display = 'block'; } else ch.style.display = sh.style.display = 'none';
     el.querySelector('.stars').style.display = night ? 'block' : 'none';
@@ -71,7 +73,7 @@
     $('wait').hidden = !!pt; $('waitCode').textContent = S.code || '';
     $('goTown').disabled = !pt;
     const d = $('desk'); d.style.setProperty('--l', A.sky[W.me.kind][0]); d.style.setProperty('--r', A.sky[W.pt.kind][0]);
-    SIDES.forEach(s => { const pf = $('pf-' + s), pr = person(s) && person(s).profile; pf.hidden = !pr; if (pr) pf.src = pr; });
+    SIDES.forEach(s => { const pf = $('pf-' + s), pr = person(s) && okProfile(person(s).profile) ? person(s).profile : null; pf.hidden = !pr; if (pr) pf.src = pr; });
     paintTown(); paintStrip(); photoBtn(); paintRoute();
   }
   // 지구본 + "서울 ━ 뉴욕 · 거리 · 시차" 요약
@@ -79,7 +81,7 @@
     const a = S.me.city, b = D.partner && D.partner.city;
     Globe.set(a, b);
     if (!b) { $('route').textContent = a.name + ' · 상대를 기다리는 중'; $('rg-sum').textContent = ''; return; }
-    const df = Math.abs(off(a.tz) - off(b.tz)), dtxt = df === 0 ? '시차 없음' : '시차 ' + (Number.isInteger(df) ? df : df.toFixed(1)) + '시간';
+    const df = Math.abs(off(a.tz) - off(b.tz)), dtxt = df === 0 ? '시차 없음' : '시차 ' + fmtDiff(df);
     const txt = a.name + ' ━ ' + b.name + ' · ' + Globe.km(a, b).toLocaleString() + 'km · ' + dtxt;
     $('route').textContent = txt;
     $('rg-sum').textContent = txt + ' · ' + KL[W.me.kind] + ' ' + W.me.temp + '° ↔ ' + KL[W.pt.kind] + ' ' + W.pt.temp + '°';
@@ -96,7 +98,7 @@
     if (D.partner) {
       tm('t-pt', D.partner.city.tz);
       const df = Math.abs(off(S.me.city.tz) - off(D.partner.city.tz));
-      $('diff').textContent = df === 0 ? '같은 시간대' : '시차 ' + (Number.isInteger(df) ? df : df.toFixed(1)) + '시간';
+      $('diff').textContent = df === 0 ? '같은 시간대' : '시차 ' + fmtDiff(df);
     } else { $('t-pt').textContent = '--:--'; $('diff').textContent = '기다리는 중'; }
     const m = moonIdx(); $('moonIcon').src = A.moonsIcon[m.i];
     $('moonTxt').textContent = '오늘의 달 · ' + MOONN[m.i] + ' (' + Math.round((1 - Math.cos(2 * Math.PI * m.p)) / 2 * 100) + '%)';
@@ -122,7 +124,7 @@
         const p = person(s); if (!p) continue;
         const u = 'https://api.open-meteo.com/v1/forecast?latitude=' + p.city.lat + '&longitude=' + p.city.lon + '&current=temperature_2m,weather_code,is_day&daily=sunrise,sunset&timezone=auto&forecast_days=1';
         const j = await (await fetch(u)).json();
-        W[s].kind = kindFrom(j.current.weather_code, j.current.is_day, j.current.time, j.daily.sunrise[0], j.daily.sunset[0]);
+        W[s].kind = kindFrom(j.current.weather_code, j.current.is_day, j.current.time, j.daily.sunrise[0], j.daily.sunset[0]); W[s].night = !j.current.is_day;
         W[s].temp = Math.round(j.current.temperature_2m); $('sel-' + s).value = W[s].kind;
       }
       $('status').textContent = '✓ 실시간 날씨 적용됨 (Open-Meteo)'; $('live').textContent = '● LIVE';
@@ -149,6 +151,12 @@
   const when = iso => new Intl.DateTimeFormat('ko-KR', { timeZone: S.me.city.tz, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
   const nameOf = slot => slot === S.slot ? S.me.name : (D.partner ? D.partner.name : '상대');
   const isPix = d => d.startsWith('data:image/png');
+  const okImg = d => typeof d === 'string' && /^data:image\/(jpeg|png);base64,[A-Za-z0-9+\/=]+$/.test(d);
+  const okProfile = d => typeof d === 'string' && /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(d);
+  const okDate = d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+  const safeTz = tz => { try { new Intl.DateTimeFormat('en', { timeZone: tz }); return tz; } catch (e) { return 'UTC'; } };
+  const cleanCity = c => ({ ...c, tz: safeTz(c.tz), lat: Number.isFinite(+c.lat) ? +c.lat : 0, lon: Number.isFinite(+c.lon) ? +c.lon : 0, name: String(c.name || '') });
+  const fmtDiff = df => { const h = Math.floor(df), m = Math.round((df - h) * 60); return m ? h + '시간 ' + m + '분' : h + '시간'; };
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   /* ---------- 데이터 새로고침 ---------- */
@@ -156,8 +164,9 @@
     if (!S || !S.code) return;
     try {
       const c = await api().getCouple(S.code);
-      const pt = (c.members || []).find(m => m.slot !== S.slot) || null;
-      const ph = await api().listPhotos(S.code), nt = await api().listNotes(S.code);
+      let pt = (c.members || []).find(m => m.slot !== S.slot) || null;
+      if (pt) pt = { ...pt, city: cleanCity(pt.city), profile: okProfile(pt.profile) ? pt.profile : null };
+      const ph = (await api().listPhotos(S.code)).filter(p => okImg(p.data) && okDate(p.local_date)), nt = await api().listNotes(S.code);
       const changed = JSON.stringify([pt, ph.map(p => p.id), nt.map(n => n.id)]) !== JSON.stringify([D.partner, D.photos.map(p => p.id), D.notes.map(n => n.id)]);
       const hadPt = !!D.partner;
       D = { partner: pt, photos: ph, notes: nt };
@@ -175,19 +184,24 @@
     box.innerHTML = '<span class="muted">' + esc(D.partner.name) + '의 사진</span>';
     theirs.forEach(p => { const i = document.createElement('img'); i.src = p.data; i.alt = ''; i.className = 'th' + (isPix(p.data) ? ' pix' : ''); i.onclick = () => openPhoto(p); box.appendChild(i); });
   }
-  function thumbs(list) {
-    if (!list.length) return '<div class="muted">—</div>';
-    return list.map(p => '<img class="th' + (isPix(p.data) ? ' pix' : '') + '" data-id="' + p.id + '" alt="" src="' + p.data + '">').join('');
+  function addThumbs(parent, list) {
+    if (!list.length) { const m = document.createElement('div'); m.className = 'muted'; m.textContent = '—'; parent.appendChild(m); return; }
+    list.forEach(p => { const i = document.createElement('img'); i.className = 'th' + (isPix(p.data) ? ' pix' : ''); i.alt = ''; i.src = p.data; i.onclick = () => openPhoto(p); parent.appendChild(i); });
   }
   function drawPhotos() {
     const box = $('photoList'); if (!box || !S) return;
-    if (!D.photos.length) { box.innerHTML = '<div class="emptyhint" style="display:block">아직 사진이 없어요. 오늘의 사진을 보내 보세요.</div>'; return; }
+    box.textContent = '';
+    if (!D.photos.length) { const e = document.createElement('div'); e.className = 'emptyhint'; e.style.display = 'block'; e.textContent = '아직 사진이 없어요. 오늘의 사진을 보내 보세요.'; box.appendChild(e); return; }
     const dates = [...new Set(D.photos.map(p => p.local_date))].sort().reverse();
-    box.innerHTML = dates.map(d => {
-      const day = D.photos.filter(p => p.local_date === d);
-      return '<div class="day"><div class="dh">' + d + '</div><div class="cols"><div><div class="who2">' + esc(S.me.name) + '</div>' + thumbs(day.filter(p => p.slot === S.slot)) + '</div><div><div class="who2">' + esc(D.partner ? D.partner.name : '상대') + '</div>' + thumbs(day.filter(p => p.slot !== S.slot)) + '</div></div></div>';
-    }).join('');
-    box.querySelectorAll('img.th').forEach(i => i.onclick = () => openPhoto(D.photos.find(p => String(p.id) === i.dataset.id)));
+    dates.forEach(d => {
+      const day = D.photos.filter(p => p.local_date === d), wrap = document.createElement('div'); wrap.className = 'day';
+      const h = document.createElement('div'); h.className = 'dh'; h.textContent = d; wrap.appendChild(h);
+      const cols = document.createElement('div'); cols.className = 'cols';
+      [[S.me.name, day.filter(p => p.slot === S.slot)], [D.partner ? D.partner.name : '상대', day.filter(p => p.slot !== S.slot)]].forEach(([nm, list]) => {
+        const col = document.createElement('div'), w = document.createElement('div'); w.className = 'who2'; w.textContent = nm; col.appendChild(w); addThumbs(col, list); cols.appendChild(col);
+      });
+      wrap.appendChild(cols); box.appendChild(wrap);
+    });
   }
   function openPhoto(p) {
     $('lbImg').src = p.data; $('lbImg').className = isPix(p.data) ? 'pix' : '';
@@ -308,7 +322,7 @@
     $('name').value = me ? me.name : '';
     $('country').value = draft.place.cc; $('city').value = draft.place.city ? draft.place.city.name : ''; $('cities').innerHTML = '';
     $('setupTitle').textContent = isEdit ? '내 정보 수정' : '먼저 내 정보를 등록해요'; $('setupErr').textContent = ''; $('prev').hidden = true;
-    $('setupCancel').hidden = !isEdit; renderSetupAvatar(); renderPicked(); view('v-setup');
+    $('setupCancel').hidden = !isEdit; $('resetEdit').hidden = !isEdit; renderSetupAvatar(); renderPicked(); view('v-setup');
   }
   function submitSetup(e) {
     e.preventDefault();
@@ -318,7 +332,7 @@
     const cn = Geo.country(draft.place.cc);
     const city = draft.place.city ? { name: draft.place.city.name, country: cn.name, cc: cn.cc, lat: draft.place.city.lat, lon: draft.place.city.lon, tz: draft.place.city.tz, isCapital: false } : { ...Geo.capitalOf(cn.cc), isCapital: true };
     const me = { name, avatar: draft.avatar, city, profile: draft.profile };
-    if (editing && S) { S.me = me; save(); api().saveMember(S.code, S.slot, me).catch(() => { }); startHome(); }
+    if (editing && S) { S.me = me; save(); api().saveMember(S.code, S.slot, me).catch(() => toast('내 정보를 서버에 저장하지 못했어요. 상대 화면에는 이전 정보가 보일 수 있어요.')); startHome(); }
     else { pendingMe = me; $('connErr').textContent = ''; view('v-connect'); }
   }
   async function onUpload(file) {
@@ -366,7 +380,7 @@
       $('st-town').addEventListener('click', e => { if (!e.target.classList.contains('note')) heart($('st-town'), e); });   // 하트만, 말풍선 없음
       started = true;
     }
-    $('editMe').hidden = false; $('demo').hidden = false; $('codeBtn').hidden = S.mode === 'local';
+    $('editMe').hidden = false; $('demo').hidden = S.mode !== 'local'; $('codeBtn').hidden = S.mode === 'local';
     $('codeBtn').textContent = '코드 ' + S.code;
     showRegions(); view('v-home'); paint(); clock(); refresh(false).then(real);
   }
@@ -407,6 +421,7 @@
   }
 
   /* ---------- 이벤트 ---------- */
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('m-view').hidden = true; $('m-photo').hidden = true; } });
   $('setupForm').addEventListener('submit', submitSetup);
   $('setupCancel').onclick = () => view('v-home');
   $('editMe').onclick = () => openSetup(true);
@@ -433,18 +448,26 @@
   $('pCancel').onclick = () => { $('m-photo').hidden = true; }; $('pSend').onclick = sendPhoto;
   $('m-view').onclick = () => { $('m-view').hidden = true; };
   $('real').onclick = real;
-  $('reset').onclick = () => { if (confirm('이 기기에 저장된 정보를 지우고 처음부터 다시 할까요? (서버의 사진·쪽지는 코드로 다시 들어오면 볼 수 있어요)')) { try { localStorage.removeItem(KEY); localStorage.removeItem(LKEY); } catch (e) { } location.reload(); } };
+  $('reset').onclick = $('resetEdit').onclick = () => { if (confirm('이 기기에 저장된 정보를 지우고 처음부터 다시 할까요? (서버의 사진·쪽지는 코드로 다시 들어오면 볼 수 있어요)')) { try { localStorage.removeItem(KEY); localStorage.removeItem(LKEY); } catch (e) { } location.reload(); } };
   SIDES.forEach(s => {
     const sel = $('sel-' + s);
     Object.keys(KL).forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = KL[k]; sel.appendChild(o); });
-    sel.onchange = () => { W[s].kind = sel.value; paint(); };
+    sel.onchange = () => { W[s].kind = sel.value; W[s].night = sel.value === 'night'; paint(); };
   });
 
   /* ---------- 시작 ---------- */
   Globe.attach($('globe')); initRegions();
   setInterval(clock, 1000);
-  setInterval(() => { if (S && S.code) refresh(true); }, 25000);
+  let lastState = '';
+  async function poll() {   // 숨겨진 탭에서는 멈추고, 바뀐 게 있을 때만 전체를 다시 받음
+    if (!S || !S.code || document.hidden) return;
+    let st = null; try { st = JSON.stringify(await api().getState(S.code)); } catch (e) { }
+    if (st && st === lastState) return; if (st) lastState = st;
+    await refresh(true);
+  }
+  setInterval(poll, 40000); document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
   setInterval(() => { if (S) real(); }, 10 * 60 * 1000);
   Geo.COUNTRIES.forEach(c => { const o = document.createElement('option'); o.value = c.cc; o.textContent = c.name; $('country').appendChild(o); });
+  if (S && S.me && S.me.city) S.me.city = cleanCity(S.me.city);
   Av.load().then(() => { if (S && S.me) startHome(); else openSetup(false); });
 })();

@@ -146,7 +146,7 @@
   }
 
   function layerUrl(avatar) {
-    if (avatar.custom) return avatar.url;
+    if (avatar.custom) return /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(avatar.url || '') ? avatar.url : 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
     const k = JSON.stringify(avatar);
     return cache[k] || (cache[k] = render(avatar).toDataURL());
   }
