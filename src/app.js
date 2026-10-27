@@ -440,11 +440,23 @@
       if (invite) { $('joinCode').value = invite; $('inviteHint').hidden = false; }
     }
   }
+  const API_BASE = /github\.io$/.test(location.hostname) ? 'https://same-sky-hazel.vercel.app' : '';   // Pages에는 서버 함수가 없어 Vercel 쪽을 호출
+  async function aiPixelize(im, mode) {   // 사진을 줄여 서버 함수로 보내고, 도트 그림을 받아 온다
+    const k = Math.min(1, 768 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+    c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+    $('aiStat').textContent = 'AI가 도트로 그리는 중… (20~60초)';
+    let r; try { r = await fetch(API_BASE + '/api/pixelize', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ image: c.toDataURL('image/jpeg', .85), mode }) }); } catch (e) { throw new Error('서버에 연결하지 못했어요.'); }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.image) throw new Error({ no_key: 'AI 변환이 아직 준비되지 않았어요.', limit: '오늘은 AI 변환을 너무 많이 썼어요. 잠시 뒤에 다시 해 주세요.', rejected: '이 사진은 변환할 수 없었어요. 다른 사진을 써 보세요.' }[j.error] || 'AI 변환에 실패했어요.');
+    $('aiStat').textContent = '완료! 마음에 안 들면 다시 선택해 보세요.';
+    return loadImg(await (await fetch(j.image)).blob());
+  }
   async function onUpload(file) {
     try {
-      const im = await loadImg(file), mode = document.querySelector('input[name="mode"]:checked').value; let cv;
+      const mode = document.querySelector('input[name="mode"]:checked').value; let cv, im = await loadImg(file), ai = false;
+      if ($('aiMode').checked) { try { im = await aiPixelize(im, mode); ai = true; } catch (e) { $('aiStat').textContent = e.message + ' 대신 기본 변환을 썼어요.'; } }
       if (mode === 'full') {
-        cv = dotify(im, { size: 30, ratio: 2, colors: 10, contrast: 1.15, sat: 1.3, sharpen: .6, outline: true, rmbg: true, tol: 40 });
+        cv = dotify(im, { size: 30, ratio: 2, colors: 10, contrast: 1.15, sat: 1.3, sharpen: .6, outline: true, rmbg: true, tol: 40, ...(ai ? { colors: 12, contrast: 1, sat: 1, sharpen: 0 } : {}) });
         const layer = document.createElement('canvas'); layer.width = 110; layer.height = 120;
         layer.getContext('2d').drawImage(cv, Math.round((110 - cv.width) / 2), 108 - cv.height);
         draft.avatar = { custom: true, url: layer.toDataURL(), thumb: cv.toDataURL() }; renderSetupAvatar();
