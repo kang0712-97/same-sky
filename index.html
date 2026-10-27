@@ -51,7 +51,7 @@
       <div class="picked" id="picked"></div>
      </div>
     </fieldset>
-    <div class="row2"><button type="button" class="btn" id="resetEdit" hidden>이 기기 초기화</button><button type="button" class="btn" id="setupCancel" hidden>취소</button><button class="btn p" type="submit">다음</button></div>
+    <div class="row2"><button type="button" class="btn" id="keyBtn" hidden>기기 변경 열쇠 복사</button><button type="button" class="btn" id="resetEdit" hidden>이 기기 초기화</button><button type="button" class="btn" id="setupCancel" hidden>취소</button><button class="btn p" type="submit">다음</button></div>
     <div class="err" id="setupErr"></div>
    </form>
   </div>
@@ -69,8 +69,8 @@
     <fieldset>
      <legend>상대가 만든 코드가 있어요</legend>
      <div class="hint" id="inviteHint" hidden>초대 링크로 오셨네요! 코드가 입력돼 있어요. 입장만 누르면 돼요.</div>
-     <div class="srch"><input id="joinCode" maxlength="8" placeholder="코드 입력 (예: 3FA9C1)" style="text-transform:uppercase"><button class="btn small" id="cJoin" type="button">입장</button></div>
-     <div class="inl" id="slotRow" hidden>내 자리 <select id="slotPick"><option value="a">처음 만든 사람</option><option value="b">초대받은 사람</option></select></div>
+     <div class="srch"><input id="joinCode" maxlength="8" placeholder="코드 입력 (예: 3FA9C1B2)" style="text-transform:uppercase"><button class="btn small" id="cJoin" type="button">입장</button></div>
+     <div class="inl" id="slotRow" hidden>내 자리 <select id="slotPick"><option value="a">처음 만든 사람</option><option value="b">초대받은 사람</option></select><input id="slotKey" placeholder="기기 변경 열쇠 (이전 기기에서 복사)" autocomplete="off" style="flex:1;min-width:200px"></div>
     </fieldset>
     <div class="err" id="connErr"></div>
     <div class="row2"><button class="btn" id="cBack" type="button">◀ 이전</button><button class="btn" id="cDemo" type="button">혼자 체험하기</button></div>

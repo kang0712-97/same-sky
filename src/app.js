@@ -23,6 +23,7 @@
     return /^[0-9A-F]{4,8}$/.test(c) ? c : '';
   })();
   let draft = null, townSide = 'pt', notesTab = 'in', editing = false, pending = null, pendingMe = null;
+  const newToken = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
   const otherSlot = () => S.slot === 'a' ? 'b' : 'a';
 
   /* ---------- 저장소: 서버(Supabase) 또는 이 기기(체험) ---------- */
@@ -75,6 +76,7 @@
   }
   function explain(e) {
     if (e.code === 'no_config' || e.code === 'no_schema') return '서버 준비가 아직 안 됐어요. (관리자: supabase/schema.sql 을 Supabase에서 실행해야 해요) — 지금은 "혼자 체험하기"를 쓸 수 있어요.';
+    if (e.code === 'forbidden') return '이 자리는 다른 기기가 쓰고 있어요. 원래 쓰던 기기의 "기기 변경 열쇠"가 필요해요.';
     if (e.code === 'limit') return '오늘 3장을 모두 보냈어요.';
     if (e.code === 'too_big') return '사진 용량이 너무 커요.';
     return '서버와 통신하지 못했어요. 잠시 후 다시 시도해 주세요.';
@@ -432,7 +434,7 @@
     $('name').value = me ? me.name : '';
     $('country').value = draft.place.cc; $('city').value = draft.place.city ? draft.place.city.name : ''; $('cities').innerHTML = '';
     $('setupTitle').textContent = isEdit ? '내 정보 수정' : '먼저 내 정보를 등록해요'; $('setupErr').textContent = ''; $('prev').hidden = true;
-    $('setupCancel').hidden = !isEdit; $('resetEdit').hidden = !isEdit; renderSetupAvatar(); renderPicked(); view('v-setup');
+    $('setupCancel').hidden = !isEdit; $('keyBtn').hidden = !(isEdit && S && S.mode === 'remote' && S.token); $('resetEdit').hidden = !isEdit; renderSetupAvatar(); renderPicked(); view('v-setup');
   }
   function submitSetup(e) {
     e.preventDefault();
@@ -478,7 +480,7 @@
     $('connErr').textContent = '';
     try {
       const code = await Remote.createCouple();
-      S = { code, slot: 'a', mode: 'remote', me: pendingMe }; await Remote.saveMember(code, 'a', S.me); save(); startHome();
+      S = { code, slot: 'a', mode: 'remote', me: pendingMe, token: newToken() }; Remote.token = S.token; await Remote.saveMember(code, 'a', S.me); save(); startHome();
     } catch (e) { $('connErr').textContent = explain(e); }
   }
   async function connectJoin() {
@@ -490,7 +492,9 @@
       const taken = c.members.map(m => m.slot);
       if (taken.length >= 2 && $('slotRow').hidden) { $('slotRow').hidden = false; $('connErr').textContent = '이미 두 사람이 등록된 코드예요. 기기를 바꾼 경우라면 본인 자리를 골라 다시 눌러 주세요.'; return; }
       const slot = taken.length >= 2 ? $('slotPick').value : (!taken.includes('b') ? 'b' : 'a');
-      S = { code, slot, mode: 'remote', me: pendingMe }; await Remote.saveMember(code, slot, S.me); save(); startHome();
+      const key = taken.length >= 2 ? $('slotKey').value.trim() : '';   // 기기를 바꾼 경우: 이전 기기의 열쇠
+      if (taken.length >= 2 && key.length < 16) { $('connErr').textContent = '기기 변경 열쇠를 입력해 주세요. (이전 기기의 "내 정보" 화면에서 복사할 수 있어요)'; return; }
+      S = { code, slot, mode: 'remote', me: pendingMe, token: key || newToken() }; Remote.token = S.token; await Remote.saveMember(code, slot, S.me); save(); startHome();
     } catch (e) { $('connErr').textContent = explain(e); }
   }
   function connectDemo() { S = { code: 'DEMO', slot: 'a', mode: 'local', me: pendingMe }; save(); if (!L.photos.length && !L.notes.length) demoPartnerSends(2); startHome(); }
@@ -588,6 +592,7 @@
   $('setupForm').addEventListener('submit', submitSetup);
   $('setupCancel').onclick = () => view('v-home');
   $('editMe').onclick = () => openSetup(true);
+  $('keyBtn').onclick = async () => { try { await navigator.clipboard.writeText(S.token); toast('기기 변경 열쇠를 복사했어요. 다른 사람에게 알려주지 마세요'); } catch (e) { toast('열쇠: ' + S.token); } };
   enterKey($('name'), () => $('city').focus());
   $('country').addEventListener('change', () => { draft.place = { cc: $('country').value, city: null }; $('city').value = ''; $('cities').innerHTML = ''; renderPicked(); });
   $('city').addEventListener('input', onCityInput);
@@ -628,7 +633,7 @@
   $('news').onclick = () => { const u = unread(); if (u.np || u.nh) { drawPhotos(); view('v-photos'); markPhotosSeen(); } else { notesTab = 'in'; drawNotesBox(); view('v-notes'); markNotesSeen(); } };
   $('demoSend').onclick = async () => { demoPartnerSends(1); await refresh(true); };
   $('real').onclick = real;
-  $('reset').onclick = $('resetEdit').onclick = () => { if (confirm('이 기기에 저장된 정보를 지우고 처음부터 다시 할까요? (서버의 사진·쪽지는 코드로 다시 들어오면 볼 수 있어요)')) { try { localStorage.removeItem(KEY); localStorage.removeItem(LKEY); } catch (e) { } location.reload(); } };
+  $('reset').onclick = $('resetEdit').onclick = () => { if (confirm('이 기기에 저장된 정보를 지우고 처음부터 다시 할까요? (서버의 사진·쪽지는 코드로 다시 들어올 수 있지만, 내 자리로 돌아오려면 "기기 변경 열쇠"가 필요해요. 열쇠는 "내 정보"에서 복사할 수 있어요)')) { try { localStorage.removeItem(KEY); localStorage.removeItem(LKEY); } catch (e) { } location.reload(); } };
   SIDES.forEach(s => {
     const sel = $('sel-' + s);
     Object.keys(KL).forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = KL[k]; sel.appendChild(o); });
@@ -649,5 +654,11 @@
   setInterval(() => { if (S) real(); }, 10 * 60 * 1000);
   Geo.COUNTRIES.forEach(c => { const o = document.createElement('option'); o.value = c.cc; o.textContent = c.name; $('country').appendChild(o); });
   if (S && S.me && S.me.city) S.me.city = cleanCity(S.me.city);
-  Av.load().then(() => { if (S && S.me) { startHome(); if (invite && invite !== S.code) toast('이 기기는 이미 등록돼 있어요. 새로 연결하려면 정보 초기화 후 다시 열어 주세요.'); } else openSetup(false); });
+  async function claimSlot() {   // 예전(토큰 도입 전) 등록자: 이 기기의 열쇠를 만들어 자리를 확정
+    if (!S || S.mode !== 'remote') return;
+    if (!S.token) { S.token = newToken(); save(); Remote.token = S.token; try { await Remote.saveMember(S.code, S.slot, S.me); } catch (e) { if (e.code === 'forbidden') { S.token = ''; save(); toast(explain(e)); } } }
+    else Remote.token = S.token;
+  }
+  if (S && S.token) Remote.token = S.token;
+  Av.load().then(() => { claimSlot(); if (S && S.me) { startHome(); if (invite && invite !== S.code) toast('이 기기는 이미 등록돼 있어요. 새로 연결하려면 정보 초기화 후 다시 열어 주세요.'); } else openSetup(false); });
 })();

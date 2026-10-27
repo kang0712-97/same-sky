@@ -44,12 +44,32 @@ alter table ss_photos  enable row level security;
 alter table ss_notes   enable row level security;
 revoke all on ss_couples, ss_members, ss_photos, ss_notes from anon, authenticated;
 
+-- 사칭 방지: 슬롯마다 기기 비밀 토큰(해시만 저장). 쓰기 함수는 모두 토큰이 맞아야 실행됨.
+-- 이전 버전의(토큰 없는) 쓰기 함수는 우회로가 되므로 지운다.
+drop function if exists ss_save_member(text,text,text,jsonb,jsonb,text);
+drop function if exists ss_add_photo(text,text,text,text,text,text);
+drop function if exists ss_add_note(text,text,text,real,real);
+drop function if exists ss_heart_photo(text,uuid,text);
+drop function if exists ss_save_room(text,text,jsonb);
+alter table ss_members add column if not exists token_hash text;
+
+create or replace function ss_th(p_token text) returns text
+language sql immutable as $$ select encode(sha256(convert_to(coalesce(p_token, ''), 'UTF8')), 'hex') $$;
+
+-- 이 슬롯의 주인이 맞는지 확인 (아직 토큰이 없는 예전 등록자는 통과 → 앱이 다음 실행 때 토큰을 등록함)
+create or replace function ss_auth(p_code text, p_slot text, p_token text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if p_slot not in ('a','b') then raise exception 'bad_slot'; end if;
+  if not exists (select 1 from ss_members where code = upper(p_code) and slot = p_slot and (token_hash is null or token_hash = ss_th(p_token))) then raise exception 'forbidden'; end if;
+end $$;
+
 create or replace function ss_create_couple() returns text
 language plpgsql security definer set search_path = public as $$
 declare c text;
 begin
   loop
-    c := upper(substr(md5(gen_random_uuid()::text), 1, 6));
+    c := upper(substr(md5(gen_random_uuid()::text), 1, 8));
     exit when not exists (select 1 from ss_couples where code = c);
   end loop;
   insert into ss_couples(code) values (c);
@@ -64,22 +84,25 @@ language sql security definer set search_path = public as $$
   else json_build_object('exists', false, 'members', '[]'::json) end;
 $$;
 
-create or replace function ss_save_member(p_code text, p_slot text, p_name text, p_avatar jsonb, p_city jsonb, p_profile text) returns void
+create or replace function ss_save_member(p_code text, p_slot text, p_name text, p_avatar jsonb, p_city jsonb, p_profile text, p_token text) returns void
 language plpgsql security definer set search_path = public as $$
 begin
   if not exists (select 1 from ss_couples where code = upper(p_code)) then raise exception 'no_couple'; end if;
   if p_slot not in ('a','b') then raise exception 'bad_slot'; end if;
+  if length(coalesce(p_token, '')) < 16 then raise exception 'bad_token'; end if;
+  if exists (select 1 from ss_members where code = upper(p_code) and slot = p_slot and token_hash is not null and token_hash <> ss_th(p_token)) then raise exception 'forbidden'; end if;
   if length(p_avatar::text) > 30000 then raise exception 'too_big'; end if;
   if p_profile is not null and (length(p_profile) > 30000 or p_profile !~ '^data:image/png;base64,[A-Za-z0-9+/=]+$') then raise exception 'bad_profile'; end if;
   if (p_city->>'lat')::float not between -90 and 90 or (p_city->>'lon')::float not between -180 and 180 or char_length(p_city->>'name') not between 1 and 60 then raise exception 'bad_city'; end if;
-  insert into ss_members(code, slot, name, avatar, city, profile) values (upper(p_code), p_slot, p_name, p_avatar, p_city, p_profile)
-  on conflict (code, slot) do update set name = excluded.name, avatar = excluded.avatar, city = excluded.city, profile = excluded.profile, updated_at = now();
+  insert into ss_members(code, slot, name, avatar, city, profile, token_hash) values (upper(p_code), p_slot, p_name, p_avatar, p_city, p_profile, ss_th(p_token))
+  on conflict (code, slot) do update set name = excluded.name, avatar = excluded.avatar, city = excluded.city, profile = excluded.profile, token_hash = excluded.token_hash, updated_at = now();
 end $$;
 
-create or replace function ss_add_photo(p_code text, p_slot text, p_local_date text, p_caption text, p_weather text, p_data text) returns uuid
+create or replace function ss_add_photo(p_code text, p_slot text, p_local_date text, p_caption text, p_weather text, p_data text, p_token text) returns uuid
 language plpgsql security definer set search_path = public as $$
 declare n int; new_id uuid;
 begin
+  perform ss_auth(p_code, p_slot, p_token);
   if not exists (select 1 from ss_couples where code = upper(p_code)) then raise exception 'no_couple'; end if;
   if length(p_data) > 700000 then raise exception 'too_big'; end if;
   if p_local_date !~ '^\d{4}-\d{2}-\d{2}$' then raise exception 'bad_date'; end if;
@@ -98,10 +121,11 @@ language sql security definer set search_path = public as $$
   ) t;
 $$;
 
-create or replace function ss_add_note(p_code text, p_slot text, p_body text, p_x real, p_y real) returns uuid
+create or replace function ss_add_note(p_code text, p_slot text, p_body text, p_x real, p_y real, p_token text) returns uuid
 language plpgsql security definer set search_path = public as $$
 declare new_id uuid;
 begin
+  perform ss_auth(p_code, p_slot, p_token);
   if not exists (select 1 from ss_couples where code = upper(p_code)) then raise exception 'no_couple'; end if;
   insert into ss_notes(code, slot, body, x, y) values (upper(p_code), p_slot, left(p_body, 60), greatest(0, least(100, p_x)), greatest(0, least(100, p_y))) returning id into new_id;
   return new_id;
@@ -115,9 +139,10 @@ language sql security definer set search_path = public as $$
 $$;
 
 -- 사진에 하트 보내기/취소 (누르면 토글)
-create or replace function ss_heart_photo(p_code text, p_photo_id uuid, p_slot text) returns void
+create or replace function ss_heart_photo(p_code text, p_photo_id uuid, p_slot text, p_token text) returns void
 language plpgsql security definer set search_path = public as $$
 begin
+  perform ss_auth(p_code, p_slot, p_token);
   if p_slot not in ('a','b') then raise exception 'bad_slot'; end if;
   update ss_photos set hearts = case when p_slot = any(hearts) then array_remove(hearts, p_slot) else array_append(hearts, p_slot) end
   where id = p_photo_id and code = upper(p_code);
@@ -135,9 +160,10 @@ create table if not exists ss_rooms (
 alter table ss_rooms enable row level security;
 revoke all on ss_rooms from anon, authenticated;
 
-create or replace function ss_save_room(p_code text, p_slot text, p_room jsonb) returns void
+create or replace function ss_save_room(p_code text, p_slot text, p_room jsonb, p_token text) returns void
 language plpgsql security definer set search_path = public as $$
 begin
+  perform ss_auth(p_code, p_slot, p_token);
   if not exists (select 1 from ss_couples where code = upper(p_code)) then raise exception 'no_couple'; end if;
   if p_slot not in ('a','b') then raise exception 'bad_slot'; end if;
   if jsonb_typeof(p_room) <> 'object' or length(p_room::text) > 6000 then raise exception 'too_big'; end if;
@@ -161,7 +187,7 @@ language sql security definer set search_path = public as $$
     'rooms',   (select coalesce(max(updated_at)::text, '') from ss_rooms where code = upper(p_code)));
 $$;
 
-grant execute on function ss_state(text), ss_heart_photo(text,uuid,text) to anon;
-grant execute on function ss_create_couple(), ss_get_couple(text), ss_save_member(text,text,text,jsonb,jsonb,text),
-  ss_add_photo(text,text,text,text,text,text), ss_list_photos(text,int), ss_add_note(text,text,text,real,real), ss_list_notes(text) to anon;
-grant execute on function ss_save_room(text,text,jsonb), ss_get_rooms(text) to anon;
+grant execute on function ss_state(text) to anon;
+grant execute on function ss_create_couple(), ss_get_couple(text), ss_save_member(text,text,text,jsonb,jsonb,text,text),
+  ss_add_photo(text,text,text,text,text,text,text), ss_list_photos(text,int), ss_add_note(text,text,text,real,real,text), ss_list_notes(text) to anon;
+grant execute on function ss_save_room(text,text,jsonb,text), ss_get_rooms(text), ss_heart_photo(text,uuid,text,text) to anon;
