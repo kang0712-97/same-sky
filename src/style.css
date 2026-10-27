@@ -186,7 +186,7 @@ img.th{width:76px;height:76px;object-fit:cover;border:3px solid var(--ink);curso
 .news[hidden]{display:none}
 @keyframes newsb{50%{background:#fff3c8}}
 .thw{position:relative;display:inline-block;line-height:0}
-.hb{position:absolute;right:-2px;bottom:-2px;background:var(--paper);border:2px solid var(--ink);color:#c8463c;font-size:11px;line-height:1;padding:2px 3px}
+.hb{position:absolute;right:-2px;bottom:-2px;background:var(--paper);border:2px solid var(--ink);color:#a8322a;font-size:11px;line-height:1;padding:2px 3px}
 #lbHeart{align-self:stretch}
 @media (prefers-reduced-motion:reduce){.news{animation:none}}
 
@@ -220,3 +220,14 @@ img.th{width:76px;height:76px;object-fit:cover;border:3px solid var(--ink);curso
 .rsel,.rrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
 .rsel{background:var(--ink);color:var(--paper);padding:6px 10px}.rsel .btn{color:var(--ink)}
 .rcell:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+/* 접근성: 사진·쪽지 버튼, 키보드 포커스 링 */
+.thb{border:0;padding:0;background:none;cursor:pointer;line-height:0;display:block}
+.thb img.th{display:block}
+.notebtn{position:absolute;width:10%;padding:0;border:0;background:none;cursor:pointer;line-height:0;animation:wob 2.4s steps(1) infinite}
+.notebtn .note{position:static;width:100%;animation:none;display:block}
+.notebtn:hover .note{filter:invert(1)}
+.desk :focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn.p:focus-visible,.rsel :focus-visible,.news:focus-visible{outline-color:#f2a0b5}
+.ritem:focus-visible{outline:calc(var(--u)*1) dashed #fff;outline-offset:calc(var(--u)*1)}
+@media (prefers-reduced-motion:reduce){.char,.note,.notebtn,.blink,.sa,.sb,.ritem.sel,.stage .drift .in,.stage .precip .in{animation:none!important}}

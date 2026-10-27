@@ -92,10 +92,20 @@
       room.items.forEach((it, i) => {
         const img = document.createElement('img'); img.src = sprite(it.t); img.alt = DEFS[it.t][0]; img.className = 'ritem' + (i === sel ? ' sel' : ''); img.draggable = false;
         place(img, it);
-        if (opts.editable) img.addEventListener('pointerdown', e => down(e, i, img));
+        if (opts.editable) {
+          img.addEventListener('pointerdown', e => down(e, i, img));
+          img.tabIndex = 0; img.setAttribute('role', 'button'); img.alt = DEFS[it.t][0] + ' (방향키로 옮기기, Delete로 치우기)';
+          img.addEventListener('focus', () => { if (sel !== i) { sel = i; layer.querySelectorAll('.ritem').forEach((m, k) => m.classList.toggle('sel', k === i)); if (opts.onSelect) opts.onSelect(it); } });
+          img.addEventListener('keydown', e => key(e, i, img));
+        }
         layer.appendChild(img);
       });
       if (opts.onSelect) opts.onSelect(sel >= 0 ? room.items[sel] : null);
+    }
+    function key(e, i, img) {   // 방향키 1칸(Shift는 5칸), Delete 치우기
+      const it = room.items[i], s = size(it.t), wall = DEFS[it.t][1] === 'wall', k = e.shiftKey ? 5 : 1, d = { ArrowLeft: [-k, 0], ArrowRight: [k, 0], ArrowUp: [0, -k], ArrowDown: [0, k] }[e.key];
+      if (d) { e.preventDefault(); it.x = clamp(it.x + d[0], 0, RW - s[0]); it.y = clamp(it.y + d[1], 0, wall ? FLOOR + 2 - s[1] : RH - s[1]); place(img, it); clearTimeout(img._kt); img._kt = setTimeout(changed, 300); }
+      else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); e.stopPropagation(); sel = i; room.items.splice(i, 1); sel = -1; draw(); changed(); }
     }
     function down(e, i, img) {
       e.preventDefault(); e.stopPropagation();

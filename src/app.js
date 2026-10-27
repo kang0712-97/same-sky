@@ -268,7 +268,9 @@
   }
   function thumbEl(p) {
     const w = document.createElement('div'); w.className = 'thw';
-    const i = document.createElement('img'); i.className = 'th' + (isPix(p.data) ? ' pix' : ''); i.alt = ''; i.src = p.data; i.onclick = () => openPhoto(p); w.appendChild(i);
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'thb'; b.onclick = () => openPhoto(p);
+    b.setAttribute('aria-label', nameOf(p.slot) + '의 사진 열기 · ' + when(p.taken_at) + ((p.hearts || []).length ? ' · 하트 있음' : ''));
+    const i = document.createElement('img'); i.className = 'th' + (isPix(p.data) ? ' pix' : ''); i.alt = ''; i.src = p.data; b.appendChild(i); w.appendChild(b);
     if ((p.hearts || []).length) { const h = document.createElement('span'); h.className = 'hb'; h.textContent = '♥'; w.appendChild(h); }
     return w;
   }
@@ -336,9 +338,11 @@
     const box = el.querySelector('.notes'); box.innerHTML = '';
     const list = townNotes();
     list.forEach(n => {
-      const i = document.createElement('img'); i.src = A.note; i.className = 'note'; i.alt = ''; i.style.left = n.x + '%'; i.style.top = n.y + '%';
-      i.onclick = e => { e.stopPropagation(); say(el, n.body); };
-      box.appendChild(i);
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'notebtn'; b.style.left = n.x + '%'; b.style.top = n.y + '%';
+      b.setAttribute('aria-label', '쪽지 읽기 · ' + nameOf(n.slot));
+      const i = document.createElement('img'); i.src = A.note; i.className = 'note'; i.alt = ''; b.appendChild(i);
+      b.onclick = e => { e.stopPropagation(); say(el, n.body); };
+      box.appendChild(b);
     });
     $('noteEmpty').textContent = townSide === 'pt' ? '아직 보낸 쪽지가 없어요. 첫 쪽지를 남겨보세요.' : '아직 받은 쪽지가 없어요.';
     $('noteEmpty').style.display = list.length ? 'none' : 'block';
@@ -627,7 +631,7 @@
   $('pFile').onchange = e => { if (e.target.files[0]) onPhotoFile(e.target.files[0]); };
   $('pdot').onchange = () => { if (!pending || !pending.im) return; pending.data = prepare(pending.im, $('pdot').checked); $('pPrev').src = pending.data; $('pPrev').className = $('pdot').checked ? 'pix' : ''; };
   $('pCancel').onclick = () => { $('m-photo').hidden = true; }; $('pSend').onclick = sendPhoto;
-  $('m-view').onclick = () => { $('m-view').hidden = true; };
+  $('m-view').onclick = () => { $('m-view').hidden = true; }; $('lbClose').onclick = e => { e.stopPropagation(); $('m-view').hidden = true; };
   $('lbHeart').onclick = async e => {
     e.stopPropagation(); if (!curPhoto) return;
     try { await api().heartPhoto(S.code, curPhoto.id, S.slot); await refresh(true); const np = D.photos.find(x => String(x.id) === String(curPhoto.id)); if (np) openPhoto(np); }
@@ -642,6 +646,24 @@
     Object.keys(KL).forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = KL[k]; sel.appendChild(o); });
     sel.onchange = () => { W[s].kind = sel.value; W[s].night = sel.value === 'night'; paint(); };
   });
+
+  /* ---------- 접근성: 모달 포커스, 탭 상태 ---------- */
+  document.querySelectorAll('.modal').forEach(m => {   // 열리면 안으로 포커스, 닫히면 원래 자리로, Tab은 안에서만 돎
+    let back = null;
+    new MutationObserver(() => {
+      if (!m.hidden) { back = document.activeElement; const f = m.querySelector('button:not([hidden]),input:not([type=hidden]),[tabindex]'); if (f) f.focus(); }
+      else if (back && back.focus) { try { back.focus(); } catch (e) { } back = null; }
+    }).observe(m, { attributes: true, attributeFilter: ['hidden'] });
+    m.addEventListener('keydown', e => {
+      if (e.key !== 'Tab') return;
+      const f = [...m.querySelectorAll('button:not([hidden]),input:not([hidden]):not([type=hidden]),select,textarea')].filter(x => !x.disabled && x.offsetParent !== null);
+      if (!f.length) return; const a = f[0], z = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); } else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
+    });
+  });
+  const tabState = t => t.setAttribute('aria-pressed', t.classList.contains('on') ? 'true' : 'false');
+  document.querySelectorAll('.tabs .tab').forEach(tabState);
+  new MutationObserver(ms => ms.forEach(m => { if (m.target.matches && m.target.matches('.tab')) tabState(m.target); })).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
 
   /* ---------- 시작 ---------- */
   Globe.attach($('globe')); initRegions(); buildPalette();
