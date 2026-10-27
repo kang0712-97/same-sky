@@ -350,34 +350,53 @@
   }
 
   /* ---------- 등록 화면 ---------- */
+  let avTab = 'char';
+  const AVTABS = [['char', '캐릭터'], ['hair', '머리'], ['face', '얼굴'], ['cloth', '옷'], ['item', '소품']];
   function renderSetupAvatar() {
-    const a = draft.avatar, box = $('chars'); box.innerHTML = '';
-    Av.list().forEach(c => {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'av' + (!a.custom && a.char === c.id ? ' on' : '');
-      b.title = c.name; b.innerHTML = '<img alt="" src="' + Av.thumbUrl({ char: c.id }) + '">';
-      b.onclick = () => { draft.avatar = { char: c.id, hair: null, top: null, bottom: null }; renderSetupAvatar(); }; box.appendChild(b);
-    });
+    const a = draft.avatar, tabs = $('avTabs'), panel = $('avPanel'); tabs.innerHTML = ''; panel.innerHTML = '';
     $('avPrev').src = Av.thumbUrl(a);
-    $('colors').hidden = !!a.custom;
-    [['hair', '머리색'], ['top', '상의색'], ['bottom', '하의색']].forEach(([k, label]) => {
-      const row = $('c-' + k); row.innerHTML = '<span class="cl">' + label + '</span>';
-      const def = document.createElement('button'); def.type = 'button'; def.className = 'sw2 def' + (!a[k] ? ' on' : ''); def.textContent = '기본'; def.onclick = () => { a[k] = null; renderSetupAvatar(); }; row.appendChild(def);
-      Av.SWATCH[k].forEach(c => { const s = document.createElement('button'); s.type = 'button'; s.className = 'sw2' + (a[k] === c ? ' on' : ''); s.style.background = c; s.setAttribute('aria-label', c); s.onclick = () => { a[k] = c; renderSetupAvatar(); }; row.appendChild(s); });
+    if (a.custom) avTab = 'char';
+    AVTABS.forEach(([id, label]) => {
+      if (a.custom && id !== 'char') return;
+      const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.className = 'tab' + (avTab === id ? ' on' : ''); b.textContent = label;
+      b.setAttribute('aria-selected', avTab === id); b.onclick = () => { avTab = id; renderSetupAvatar(); }; tabs.appendChild(b);
     });
-    // 머리 모양 · 소품 · 안경/목도리 · 무늬
-    const sb = $('styles'); sb.innerHTML = ''; sb.hidden = !!a.custom;
-    if (!a.custom) {
-      const ch = Av.byId(a.char);
-      const row = label => { const r = document.createElement('div'); r.className = 'crow'; r.innerHTML = '<span class="cl">' + label + '</span>'; sb.appendChild(r); return r; };
-      const chip = (r, text, on, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (on ? ' on' : ''); b.textContent = text; b.onclick = () => { fn(); renderSetupAvatar(); }; r.appendChild(b); };
-      if (ch.hairStyles && ch.hairStyles.length > 1) { const r = row('머리모양'); ch.hairStyles.forEach(s => chip(r, s.name, (a.hairStyle || ch.hairStyles[0].id) === s.id, () => { a.hairStyle = s.id; })); }
-      const rh = row('소품'); Av.headItems().forEach(s => chip(rh, s.name, (a.head || 'none') === s.id, () => { a.head = s.id; }));
-      const rf = row('꾸미기'); chip(rf, '안경', !!a.glasses, () => { a.glasses = !a.glasses; }); chip(rf, '목도리', !!a.scarf, () => { a.scarf = !a.scarf; });
-      if ((a.head && a.head !== 'none') || a.scarf) {
-        const rc = row('소품색'); Av.SWATCH.accent.forEach(c => { const s = document.createElement('button'); s.type = 'button'; s.className = 'sw2' + ((a.accent || Av.SWATCH.accent[0]) === c ? ' on' : ''); s.style.background = c; s.setAttribute('aria-label', c); s.onclick = () => { a.accent = c; renderSetupAvatar(); }; rc.appendChild(s); });
-      }
-      const rt = row('상의무늬'); Av.patterns().forEach(s => chip(rt, s.name, (a.tpat || 'none') === s.id, () => { a.tpat = s.id; }));
-      const rb = row('하의무늬'); Av.patterns().forEach(s => chip(rb, s.name, (a.bpat || 'none') === s.id, () => { a.bpat = s.id; }));
+    const ch = a.custom ? null : Av.byId(a.char);
+    const title = t => { const d = document.createElement('div'); d.className = 'cl'; d.textContent = t; panel.appendChild(d); };
+    const grid = () => { const g = document.createElement('div'); g.className = 'ogrid'; panel.appendChild(g); return g; };
+    const cell = (g, label, src, on, fn) => {   // 썸네일 칸
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'ocell' + (on ? ' on' : ''); b.title = label; b.setAttribute('aria-label', label);
+      if (src) { const im = document.createElement('img'); im.alt = ''; im.src = src; b.appendChild(im); } else { const t = document.createElement('span'); t.className = 'none'; t.textContent = '✕'; b.appendChild(t); }
+      const l = document.createElement('i'); l.textContent = label; b.appendChild(l);
+      b.onclick = () => { fn(); renderSetupAvatar(); }; g.appendChild(b);
+    };
+    const swatches = (key, label, list) => {
+      const row = document.createElement('div'); row.className = 'crow'; const cl = document.createElement('span'); cl.className = 'cl'; cl.textContent = label; row.appendChild(cl);
+      const def = document.createElement('button'); def.type = 'button'; def.className = 'sw2 def' + (!a[key] ? ' on' : ''); def.textContent = '기본'; def.onclick = () => { a[key] = null; renderSetupAvatar(); }; row.appendChild(def);
+      list.forEach(c => { const s = document.createElement('button'); s.type = 'button'; s.className = 'sw2' + (a[key] === c ? ' on' : ''); s.style.background = c; s.setAttribute('aria-label', c); s.onclick = () => { a[key] = c; renderSetupAvatar(); }; row.appendChild(s); });
+      panel.appendChild(row);
+    };
+    const accRow = () => { if ((a.head && a.head !== 'none') || a.scarf || (a.neck && a.neck !== 'none')) { const al = Av.SWATCH.accent, row = document.createElement('div'); row.className = 'crow'; row.innerHTML = '<span class="cl">소품색</span>'; al.forEach(c => { const s = document.createElement('button'); s.type = 'button'; s.className = 'sw2' + ((a.accent || al[0]) === c ? ' on' : ''); s.style.background = c; s.setAttribute('aria-label', c); s.onclick = () => { a.accent = c; renderSetupAvatar(); }; row.appendChild(s); }); panel.appendChild(row); } };
+    const V = (o) => Av.headUrl({ ...a, ...o });
+    if (avTab === 'char') {
+      title('캐릭터'); const g = grid();
+      Av.list().forEach(c => cell(g, c.name, Av.thumbUrl({ char: c.id }), !a.custom && a.char === c.id, () => { draft.avatar = { char: c.id, hair: null, top: null, bottom: null }; }));
+      if (a.custom) { const h = document.createElement('div'); h.className = 'hint'; h.textContent = '지금은 내가 만든 캐릭터예요. 위에서 고르면 꾸미기가 켜져요.'; panel.appendChild(h); }
+    } else if (avTab === 'hair') {
+      if (ch.hairStyles && ch.hairStyles.length > 1) { title('머리 모양'); const g = grid(); ch.hairStyles.forEach(s => cell(g, s.name, V({ hairStyle: s.id }), (a.hairStyle || ch.hairStyles[0].id) === s.id, () => { a.hairStyle = s.id; })); }
+      title('머리 색'); swatches('hair', '', Av.SWATCH.hair);
+    } else if (avTab === 'face') {
+      const sec = (t, key, list, base) => { title(t); const g = grid(); list.forEach(([id, name]) => cell(g, name, V({ [key]: id === 'none' ? null : id }), (a[key] || 'none') === id || (key === 'glasses' && id === 'square' && a.glasses === true), () => { a[key] = id === 'none' ? null : id; })); };
+      sec('입', 'mouth', Av.OPT.mouth); sec('볼 · 점', 'cheek', Av.OPT.cheek); sec('안경', 'glasses', Av.OPT.glasses);
+    } else if (avTab === 'cloth') {
+      title('상의 색'); swatches('top', '', Av.SWATCH.top); title('하의 색'); swatches('bottom', '', Av.SWATCH.bottom);
+      title('상의 무늬'); const g1 = grid(); Av.patterns().forEach(s => cell(g1, s.name, Av.thumbUrl({ ...a, tpat: s.id }), (a.tpat || 'none') === s.id, () => { a.tpat = s.id; }));
+      title('하의 무늬'); const g2 = grid(); Av.patterns().forEach(s => cell(g2, s.name, Av.thumbUrl({ ...a, bpat: s.id }), (a.bpat || 'none') === s.id, () => { a.bpat = s.id; }));
+    } else {
+      title('머리 소품'); const g = grid(); Av.headItems().forEach(s => cell(g, s.name, s.id === 'none' ? null : V({ head: s.id }), (a.head || 'none') === s.id, () => { a.head = s.id; }));
+      title('목 · 가슴'); const g2 = grid();
+      Av.OPT.neck.forEach(([id, name]) => cell(g2, name, id === 'none' ? null : Av.thumbUrl({ ...a, scarf: id === 'scarf', neck: id === 'scarf' ? null : id }), id === 'none' ? (!a.scarf && !a.neck) : id === 'scarf' ? !!a.scarf : a.neck === id, () => { a.scarf = id === 'scarf'; a.neck = (id === 'none' || id === 'scarf') ? null : id; }));
+      accRow();
     }
   }
   function renderPicked() {

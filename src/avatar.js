@@ -119,6 +119,18 @@
       const L = [[0, -2], [0, -1], [1, -1], [0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [3, 1], [1, 2], [2, 2], [3, 2], [4, 2]].map(([a, b]) => [an.cat[0] + a, an.cat[1] + b]);
       shape(mir(L), acc);
       [[an.cat[0] + 1, an.cat[1] + 0], [an.cat[0] + 1, an.cat[1] + 1]].forEach(([a, b]) => { put(a, b, shade(acc, 1.25)); put(MX - a, b, shade(acc, 1.25)); });
+    } else if (head === 'crown') {
+      const pts = []; for (let lx = 8; lx <= 13; lx++) pts.push([lx, -1]); [8, 10, 11, 13].forEach(lx => pts.push([lx, -2]));
+      shape(pts, (a, b) => b === -1 ? shade(acc, .85) : shade(acc, 1.15));
+    } else if (head === 'bunny') {
+      const L = []; for (let ly = -7; ly <= -1; ly++) { L.push([7, ly], [8, ly]); }
+      shape(mir(L), (a, b) => (b > -6 && (a === 8 || a === 13)) ? [255, 190, 205] : [250, 240, 232]);
+    } else if (head === 'flower') {
+      const cx = 4, cy = 5, P = [[0, -1], [-1, 0], [1, 0], [0, 1]];
+      P.forEach(([a, b]) => put(cx + a, cy + b, acc)); put(cx, cy, [250, 215, 90]);
+    } else if (head === 'halo') {
+      const pts = []; for (let lx = 8; lx <= 13; lx++) pts.push([lx, -4]);
+      shape(pts, [250, 215, 90]);
     } else if (head === 'phones' && an.cups) {
       const band = [];
       for (let ly = 0; ly <= an.cups[0] - 1; ly++) { const [l, r] = extent(ly); if (l > r) continue; band.push([l - 1, ly], [l - 2, ly], [r + 1, ly], [r + 2, ly]); }
@@ -129,11 +141,33 @@
       shape(cups, (a, b) => (b === an.cups[0] || b === an.cups[1]) ? shade(acc, .78) : shade(acc, 1.05));
     }
     if (av.glasses && an.glasses) {
-      const g = an.glasses, pts = [];
-      for (let ly = g.y[0]; ly <= g.y[1]; ly++) for (let lx = g.lx[0]; lx <= g.lx[1]; lx++) if (ly === g.y[0] || ly === g.y[1] || lx === g.lx[0] || lx === g.lx[1]) pts.push([lx, ly]);
-      const right = pts.map(([a, b]) => [MX - a, b]);
-      pts.concat(right).forEach(([a, b]) => put(a, b, INK));
+      const g = an.glasses, kind = av.glasses === true ? 'square' : av.glasses, pts = [];
+      for (let ly = g.y[0]; ly <= g.y[1]; ly++) for (let lx = g.lx[0]; lx <= g.lx[1]; lx++) {
+        const edge = ly === g.y[0] || ly === g.y[1] || lx === g.lx[0] || lx === g.lx[1];
+        const corner = (ly === g.y[0] || ly === g.y[1]) && (lx === g.lx[0] || lx === g.lx[1]);
+        if (kind === 'sun' ? true : kind === 'round' ? edge && !corner : edge) pts.push([lx, ly]);
+      }
+      pts.concat(pts.map(([a, b]) => [MX - a, b])).forEach(([a, b]) => put(a, b, kind === 'sun' ? [38, 40, 52] : INK));
       for (let lx = g.bridge[0]; lx <= g.bridge[1]; lx++) put(lx, Math.round((g.y[0] + g.y[1]) / 2), INK);
+    }
+    const fc = an.face;
+    if (fc) {
+      const two = (lx, ly, col) => { put(lx, ly, col); put(MX - lx, ly, col); };
+      if (av.cheek === 'blush') { const [cy, cx] = fc.cheek; [[0, 0], [1, 0]].forEach(([a, b]) => two(cx + a, cy + b, [238, 140, 150])); }
+      if (av.cheek === 'freckle') { const [cy, cx] = fc.cheek; [[0, 0], [2, 0], [1, 1]].forEach(([a, b]) => two(cx + a, cy + b - 1, [170, 105, 78])); }
+      if (av.cheek === 'mole') put(fc.mole[1], fc.mole[0], INK);
+      const [my, mx] = fc.mouth, red = [214, 84, 90];
+      if (av.mouth === 'smile') { put(mx - 1, my, INK); put(mx + 2, my, INK); put(mx, my + 1, INK); put(mx + 1, my + 1, INK); }
+      else if (av.mouth === 'open') { put(mx, my, INK); put(mx + 1, my, INK); put(mx, my + 1, red); put(mx + 1, my + 1, red); }
+      else if (av.mouth === 'flat') { put(mx, my, INK); put(mx + 1, my, INK); }
+      else if (av.mouth === 'tongue') { put(mx - 1, my, INK); put(mx + 2, my, INK); put(mx, my + 1, INK); put(mx + 1, my + 1, INK); put(mx + 1, my + 2, [236, 120, 130]); }
+      else if (av.mouth === 'pout') { put(mx + 1, my, INK); put(mx + 2, my, INK); }
+    }
+    if (av.neck && an.scarf) {
+      const s = an.scarf, y = s.y[0], cx = 10;
+      if (av.neck === 'choker') for (let lx = s.x[0] + 2; lx <= s.x[1] - 2; lx++) put(lx, y, shade(acc, .9));
+      else if (av.neck === 'bow') shape([[cx - 2, y], [cx - 1, y], [cx + 2, y], [cx + 3, y], [cx - 2, y + 1], [cx - 1, y + 1], [cx + 2, y + 1], [cx + 3, y + 1], [cx, y], [cx + 1, y], [cx, y + 1], [cx + 1, y + 1]], (a, b) => (a === cx || a === cx + 1) ? shade(acc, .7) : acc);
+      else if (av.neck === 'necklace') { [[cx - 2, y], [cx - 1, y + 1], [cx, y + 2], [cx + 1, y + 2], [cx + 2, y + 1], [cx + 3, y]].forEach(([a, b]) => put(a, b, [236, 200, 90])); put(cx, y + 3, acc); put(cx + 1, y + 3, acc); }
     }
     if (av.scarf && an.scarf) {
       const s = an.scarf, pts = [];
@@ -157,5 +191,21 @@
     o.getContext('2d').drawImage(c, bb.x0, bb.y0, o.width, o.height, 0, 0, o.width, o.height);
     return o.toDataURL();
   }
-  window.SSAvatar = { load, SWATCH, layerUrl, thumbUrl, list: () => chars, byId, headItems: () => headItems, patterns: () => patterns };
+  const hcache = {};
+  function headUrl(avatar) {   // 머리·얼굴 위주 확대 썸네일 (옵션 격자용)
+    if (avatar.custom) return avatar.thumb;
+    const k = JSON.stringify(avatar); if (hcache[k]) return hcache[k];
+    const ch = byId(avatar.char), im = imgs[ch.id], c0 = document.createElement('canvas'); c0.width = im.width; c0.height = im.height;
+    const x0 = c0.getContext('2d'); x0.drawImage(im, 0, 0); const bb = bbox(x0.getImageData(0, 0, im.width, im.height).data, im.width, im.height);
+    const o = document.createElement('canvas'); o.width = 26; o.height = 26;
+    o.getContext('2d').drawImage(render(avatar), bb.x0 - 2, bb.y0 - 8, 26, 26, 0, 0, 26, 26);
+    return hcache[k] = o.toDataURL();
+  }
+  const OPT = {
+    mouth: [['none', '기본'], ['smile', '미소'], ['open', '활짝'], ['tongue', '메롱'], ['flat', '무표정'], ['pout', '삐죽']],
+    cheek: [['none', '없음'], ['blush', '볼터치'], ['freckle', '주근깨'], ['mole', '점']],
+    glasses: [['none', '없음'], ['square', '네모'], ['round', '동그라미'], ['sun', '선글라스']],
+    neck: [['none', '없음'], ['scarf', '목도리'], ['choker', '초커'], ['bow', '나비넥타이'], ['necklace', '목걸이']]
+  };
+  window.SSAvatar = { headUrl, OPT, load, SWATCH, layerUrl, thumbUrl, list: () => chars, byId, headItems: () => headItems, patterns: () => patterns };
 })();
