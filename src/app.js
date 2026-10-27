@@ -256,11 +256,14 @@
   /* ---------- 사진 ---------- */
   function myToday() { return D.photos.filter(p => p.slot === S.slot && p.local_date === today()).length; }
   function photoBtn() { const n = myToday(); $('photo').textContent = n >= 3 ? '▣ 오늘 3장 모두 보냈어요' : '▣ 오늘의 사진 보내기 (' + n + '/3)'; $('photo').disabled = n >= 3; }
+  // 두 도시는 날짜가 어긋나므로, 사진함·띠는 '보는 사람 도시 기준'의 같은 하루로 묶는다 (보낸 사람 기준 local_date는 하루 3장 제한에만 쓰임)
+  const dayKey = p => { try { const t = new Date(p.taken_at); if (!isNaN(t)) return new Intl.DateTimeFormat('en-CA', { timeZone: S.me.city.tz }).format(t); } catch (e) { } return p.local_date; };
+  const dayLabel = d => { const t = today(); if (d === t) return d + ' · 오늘'; const y = new Intl.DateTimeFormat('en-CA', { timeZone: S.me.city.tz }).format(new Date(Date.now() - 864e5)); return d === y ? d + ' · 어제' : d; };
   function paintStrip() {
-    const box = $('strip'), theirs = D.photos.filter(p => p.slot !== S.slot).slice(0, 3);
+    const box = $('strip'), all = D.photos.filter(p => p.slot !== S.slot), td = all.filter(p => dayKey(p) === today()), theirs = (td.length ? td : all).slice(0, 3);
     box.innerHTML = '';
     if (!theirs.length) { box.innerHTML = '<span class="muted">' + (D.partner ? esc(D.partner.name) + '님이 아직 사진을 보내지 않았어요' : '') + '</span>'; return; }
-    box.innerHTML = '<span class="muted">' + esc(D.partner.name) + '의 사진</span>';
+    box.innerHTML = '<span class="muted">' + esc(D.partner.name) + (td.length ? '의 오늘 사진' : '의 마지막 사진 · ' + esc(dayKey(theirs[0]).slice(5))) + '</span>';
     theirs.forEach(p => box.appendChild(thumbEl(p)));
   }
   function thumbEl(p) {
@@ -277,10 +280,10 @@
     const box = $('photoList'); if (!box || !S) return;
     box.textContent = '';
     if (!D.photos.length) { const e = document.createElement('div'); e.className = 'emptyhint'; e.style.display = 'block'; e.textContent = '아직 사진이 없어요. 오늘의 사진을 보내 보세요.'; box.appendChild(e); return; }
-    const dates = [...new Set(D.photos.map(p => p.local_date))].sort().reverse();
+    const dates = [...new Set(D.photos.map(dayKey))].sort().reverse();
     dates.forEach(d => {
-      const day = D.photos.filter(p => p.local_date === d), wrap = document.createElement('div'); wrap.className = 'day';
-      const h = document.createElement('div'); h.className = 'dh'; h.textContent = d; wrap.appendChild(h);
+      const day = D.photos.filter(p => dayKey(p) === d), wrap = document.createElement('div'); wrap.className = 'day';
+      const h = document.createElement('div'); h.className = 'dh'; h.textContent = dayLabel(d); wrap.appendChild(h);
       const cols = document.createElement('div'); cols.className = 'cols';
       [[S.me.name, day.filter(p => p.slot === S.slot)], [D.partner ? D.partner.name : '상대', day.filter(p => p.slot !== S.slot)]].forEach(([nm, list]) => {
         const col = document.createElement('div'), w = document.createElement('div'); w.className = 'who2'; w.textContent = nm; col.appendChild(w); addThumbs(col, list); cols.appendChild(col);
