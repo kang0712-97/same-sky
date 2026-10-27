@@ -455,7 +455,7 @@
     if (editing && S) { S.me = me; save(); api().saveMember(S.code, S.slot, me).catch(() => toast('내 정보를 서버에 저장하지 못했어요. 상대 화면에는 이전 정보가 보일 수 있어요.')); startHome(); }
     else {
       pendingMe = me; $('connErr').textContent = ''; view('v-connect');
-      if (invite) { $('joinCode').value = invite; $('inviteHint').hidden = false; }
+      if (invite) { $('joinCode').value = invite; $('inviteHint').hidden = false; $('connBox').classList.add('invited'); }
     }
   }
   const API_BASE = /github\.io$/.test(location.hostname) ? 'https://same-sky-hazel.vercel.app' : '';   // Pages에는 서버 함수가 없어 Vercel 쪽을 호출

@@ -233,3 +233,9 @@ img.th{width:76px;height:76px;object-fit:cover;border:3px solid var(--ink);curso
 .btn.p:focus-visible,.rsel :focus-visible,.news:focus-visible{outline-color:#f2a0b5}
 .ritem:focus-visible{outline:calc(var(--u)*1) dashed #fff;outline-offset:calc(var(--u)*1)}
 @media (prefers-reduced-motion:reduce){.char,.note,.notebtn,.blink,.sa,.sb,.ritem.sel,.stage .drift .in,.stage .precip .in{animation:none!important}}
+
+/* 연결 화면: 초대 링크로 왔다면 '입장'을 맨 위로, 나머지는 한 단계 뒤로 */
+#connBox.invited #fsJoin{order:-1;border-width:4px}
+#connBox.invited #fsCreate legend::after{content:" (이미 코드가 있다면 필요 없어요)";font-weight:normal;opacity:.7}
+#fsDemo .btn{align-self:flex-start;min-width:0;flex:none}
+#connBox.invited>h2,#connBox.invited>.hint{order:-2}

@@ -58,22 +58,27 @@
 
   <!-- 2. 커플 연결 -->
   <div class="view" id="v-connect">
-   <div class="setup">
+   <div class="setup" id="connBox">
     <h2>상대와 연결해요</h2>
     <div class="hint">서로 각자의 정보만 등록하고, 아래 코드로 연결돼요.</div>
-    <fieldset>
+    <fieldset id="fsCreate">
      <legend>내가 먼저 시작</legend>
      <div class="hint">코드가 만들어져요. 시작하면 상대에게 보낼 초대 링크도 생겨요.</div>
      <button class="btn p" id="cCreate" type="button">새 코드 만들기</button>
     </fieldset>
-    <fieldset>
+    <fieldset id="fsJoin">
      <legend>상대가 만든 코드가 있어요</legend>
      <div class="hint" id="inviteHint" hidden>초대 링크로 오셨네요! 코드가 입력돼 있어요. 입장만 누르면 돼요.</div>
      <div class="srch"><input id="joinCode" aria-label="커플 코드" maxlength="8" placeholder="코드 입력 (예: 3FA9C1B2)" style="text-transform:uppercase"><button class="btn small" id="cJoin" type="button">입장</button></div>
      <div class="inl" id="slotRow" hidden>내 자리 <select id="slotPick"><option value="a">처음 만든 사람</option><option value="b">초대받은 사람</option></select><input id="slotKey" aria-label="기기 변경 열쇠" placeholder="기기 변경 열쇠 (이전 기기에서 복사)" autocomplete="off" style="flex:1;min-width:200px"></div>
     </fieldset>
+    <fieldset id="fsDemo">
+     <legend>먼저 둘러보고 싶어요</legend>
+     <div class="hint">상대 없이, 가상의 친구 '무노'와 모든 기능을 써 볼 수 있어요. 이 기기에만 저장돼요.</div>
+     <button class="btn" id="cDemo" type="button">혼자 체험하기</button>
+    </fieldset>
     <div class="err" id="connErr"></div>
-    <div class="row2"><button class="btn" id="cBack" type="button">◀ 이전</button><button class="btn" id="cDemo" type="button">혼자 체험하기</button></div>
+    <div class="row2"><button class="btn" id="cBack" type="button">◀ 이전</button></div>
    </div>
   </div>
 
