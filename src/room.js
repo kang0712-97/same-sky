@@ -22,10 +22,12 @@
     clock: ['시계', 'wall', 10, 10, [['w', 1, 0, 8, 10], ['w', 0, 1, 10, 8], ['k', 5, 2, 1, 4], ['k', 5, 5, 3, 1]]],
     frame: ['사진 액자', 'wall', 14, 12, [['n', 0, 0, 14, 12], ['w', 2, 2, 10, 8], ['p', 4, 4, 2, 2], ['p', 8, 4, 2, 2], ['p', 4, 5, 6, 2], ['p', 5, 7, 4, 1], ['p', 6, 8, 2, 1]]]
   };
-  const TYPES = Object.keys(DEFS);
+  DEFS.me = ['나', 'floor', 44, 48, []];   // 내 캐릭터(그림은 주인의 아바타). 방에 한 명만
+  const TYPES = Object.keys(DEFS).filter(t => t !== 'me');
   const WALLS = ['#f2d7c9', '#cfe3d4', '#cfdcf0', '#f4e7b5', '#d9cdea'];
   const FLOORS = ['#c58f5c', '#a9b5a0', '#d9c7a3', '#8a7a9a'];
 
+  const BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
   const cache = {};
   function sprite(t) {   // 사각형 → 캔버스(바깥 1칸 먹색 윤곽선 자동) → data URL
     if (cache[t]) return cache[t];
@@ -54,6 +56,7 @@
     if (Number.isInteger(r.floor) && r.floor >= 0 && r.floor < FLOORS.length) o.floor = r.floor;
     (Array.isArray(r.items) ? r.items : []).slice(0, MAX_ITEMS).forEach(it => {
       if (!it || !DEFS[it.t] || typeof it.x !== 'number' || typeof it.y !== 'number') return;
+      if (it.t === 'me' && o.items.some(i => i.t === 'me')) return;
       const s = size(it.t);
       o.items.push({ t: it.t, x: clamp(Math.round(it.x), 0, RW - s[0]), y: clamp(Math.round(it.y), 0, RH - s[1]), f: it.f ? 1 : 0 });
     });
@@ -61,7 +64,7 @@
   }
   const demoRoom = () => ({ wall: 2, floor: 2, items: [
     { t: 'window', x: 14, y: 12, f: 0 }, { t: 'poster', x: 70, y: 18, f: 0 }, { t: 'clock', x: 92, y: 14, f: 0 }, { t: 'frame', x: 112, y: 20, f: 0 },
-    { t: 'rug', x: 52, y: 78, f: 0 }, { t: 'bed', x: 6, y: 52, f: 0 }, { t: 'shelf', x: 134, y: 34, f: 0 }, { t: 'lamp', x: 40, y: 44, f: 0 }, { t: 'cat', x: 66, y: 82, f: 0 }, { t: 'plant', x: 120, y: 48, f: 0 }
+    { t: 'rug', x: 52, y: 78, f: 0 }, { t: 'bed', x: 6, y: 52, f: 0 }, { t: 'shelf', x: 134, y: 34, f: 0 }, { t: 'lamp', x: 40, y: 44, f: 0 }, { t: 'me', x: 84, y: 44, f: 0 }, { t: 'cat', x: 66, y: 82, f: 0 }, { t: 'plant', x: 120, y: 48, f: 0 }
   ] });
   const emptyRoom = () => ({ wall: 0, floor: 0, items: [] });
 
@@ -90,7 +93,7 @@
       wallEl.style.background = WALLS[room.wall]; floorEl.style.background = FLOORS[room.floor];
       layer.innerHTML = '';
       room.items.forEach((it, i) => {
-        const img = document.createElement('img'); img.src = sprite(it.t); img.alt = DEFS[it.t][0]; img.className = 'ritem' + (i === sel ? ' sel' : ''); img.draggable = false;
+        const img = document.createElement('img'); img.src = it.t === 'me' ? (opts.avatarUrl || BLANK) : sprite(it.t); img.alt = DEFS[it.t][0]; img.className = 'ritem' + (it.t === 'me' ? ' rme' : '') + (i === sel ? ' sel' : ''); img.draggable = false;
         place(img, it);
         if (opts.editable) {
           img.addEventListener('pointerdown', e => down(e, i, img));
@@ -104,7 +107,7 @@
     }
     function key(e, i, img) {   // 방향키 1칸(Shift는 5칸), Delete 치우기
       const it = room.items[i], s = size(it.t), wall = DEFS[it.t][1] === 'wall', k = e.shiftKey ? 5 : 1, d = { ArrowLeft: [-k, 0], ArrowRight: [k, 0], ArrowUp: [0, -k], ArrowDown: [0, k] }[e.key];
-      if (d) { e.preventDefault(); it.x = clamp(it.x + d[0], 0, RW - s[0]); it.y = clamp(it.y + d[1], 0, wall ? FLOOR + 2 - s[1] : RH - s[1]); place(img, it); clearTimeout(img._kt); img._kt = setTimeout(changed, 300); }
+      if (d) { e.preventDefault(); it.x = clamp(it.x + d[0], 0, RW - s[0]); it.y = clamp(it.y + d[1], it.t === 'me' ? FLOOR + 4 - s[1] : 0, wall ? FLOOR + 2 - s[1] : RH - s[1]); place(img, it); clearTimeout(img._kt); img._kt = setTimeout(changed, 300); }
       else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); e.stopPropagation(); sel = i; room.items.splice(i, 1); sel = -1; draw(); changed(); }
     }
     function down(e, i, img) {
@@ -116,7 +119,7 @@
       const mv = ev => {
         const k = u() || 1;
         const nx = clamp(Math.round(ox + (ev.clientX - sx) / k), 0, RW - s[0]);
-        const ny = clamp(Math.round(oy + (ev.clientY - sy) / k), 0, wall ? FLOOR + 2 - s[1] : RH - s[1]);
+        const ny = clamp(Math.round(oy + (ev.clientY - sy) / k), it.t === 'me' ? FLOOR + 4 - s[1] : 0, wall ? FLOOR + 2 - s[1] : RH - s[1]);
         if (nx !== it.x || ny !== it.y) { it.x = nx; it.y = ny; moved = true; place(img, it); }
       };
       const up = () => { img.removeEventListener('pointermove', mv); img.removeEventListener('pointerup', up); img.removeEventListener('pointercancel', up); if (moved && opts.onChange) opts.onChange(room); };
@@ -136,6 +139,13 @@
         room.items.push({ t, x: clamp(px, 0, RW - s[0]), y: wall ? clamp(8 + (n % 3) * 4, 0, FLOOR - s[1]) : clamp(64 + (n * 7) % 22, 0, RH - s[1]), f: 0 });
         sel = room.items.length - 1; draw(); changed(); return true;
       },
+      toggleMe() {   // 내 캐릭터 세우기/치우기
+        const i = room.items.findIndex(x => x.t === 'me');
+        if (i >= 0) { room.items.splice(i, 1); sel = -1; draw(); changed(); return false; }
+        if (room.items.length >= MAX_ITEMS) return null;
+        room.items.push({ t: 'me', x: 84, y: 46, f: 0 }); sel = room.items.length - 1; draw(); changed(); return true;
+      },
+      hasMe: () => room.items.some(x => x.t === 'me'),
       flip() { if (sel < 0) return; room.items[sel].f = room.items[sel].f ? 0 : 1; draw(); changed(); },
       remove() { if (sel < 0) return; room.items.splice(sel, 1); sel = -1; draw(); changed(); },
       deselect() { sel = -1; draw(); },

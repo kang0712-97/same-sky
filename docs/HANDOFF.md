@@ -71,6 +71,7 @@ pkill -f "http.server 8123"
 **AI 사진 변환**: `api/pixelize.js`(Vercel 함수) → OpenAI images/edits. 키는 Vercel 환경변수 `OPENAI_API_KEY`(없으면 503 no_key → 앱이 기본 변환으로 대체). 선택 환경변수 `OPENAI_IMAGE_MODEL`(기본 gpt-image-1), `OPENAI_IMAGE_QUALITY`(기본 medium). IP당 시간당 6회(인스턴스 메모리라 느슨함 → OpenAI 콘솔에 월 한도 필수). 등록 화면 '내 이미지로…' 안의 'AI로 도트 변환' 체크박스. Pages에서는 Vercel 주소로 호출.
 **내 방 구현됨(2026-10-27)**: `src/room.js`(160×100 칸, 가구 16종 코드로 그림·윤곽선 자동·끌어서 배치·벽/바닥색), 홈의 '⌂ 내 방' 버튼 → `v-room`(내 방/상대 방 구경 탭). 서버는 `ss_rooms` 테이블+`ss_save_room/ss_get_rooms` RPC+`ss_state`에 rooms 추가 → **schema.sql 전체 재실행 필요(167줄, `ss_save_room` 검색)**. 미적용이면 방은 이 기기에만 저장되고 토스트로 안내. 체험 모드는 상대 방 예시(`demoRoom`).
 **사칭 방지 구현·배포됨**: 슬롯별 기기 열쇠(S.token, 128비트). 서버는 해시(`ss_members.token_hash`)만 저장, 쓰기 RPC 5개는 `p_token` 필수(`ss_auth`), 토큰 없는 옛 함수는 drop. 코드 8자리. 예전 등록자는 앱 시작 때 자동 등록(claimSlot). 기기 변경은 '내 정보 > 기기 변경 열쇠 복사' → 새 기기 입장 화면 열쇠 칸. schema.sql 적용·배포 완료(2026-10-27) — 먼저 배포하면 옛 서버 함수와 안 맞아 쓰기가 전부 실패.
+**방 개선(2026-10-27)**: 방에 내 캐릭터 세우기(room.items의 t:'me', 그림은 주인 아바타 `Av.layerUrl`, 서버 스키마 변경 없음), 상대가 방을 바꾸면 '○○님이 방을 꾸몄어요' 토스트(방 화면 밖일 때).
 (이전 메모) '내 방' — 자유 배치(드래그), 상대 방 구경 가능(서버 저장 → schema.sql 변경, 사용자가 SQL Run 필요), 도트 스타일 유지.
 
 ## 6. 남은 일 (3단계 후보, 우선순위 순 제안)

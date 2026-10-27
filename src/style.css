@@ -221,6 +221,8 @@ img.th{width:76px;height:76px;object-fit:cover;border:3px solid var(--ink);curso
 .rsel{background:var(--ink);color:var(--paper);padding:6px 10px}.rsel .btn{color:var(--ink)}
 .rcell:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 
+/* 방 안의 캐릭터는 도트 밀도가 달라 부드럽게 줄임 */
+.ritem.rme{image-rendering:auto}
 /* 접근성: 사진·쪽지 버튼, 키보드 포커스 링 */
 .thb{border:0;padding:0;background:none;cursor:pointer;line-height:0;display:block}
 .thb img.th{display:block}

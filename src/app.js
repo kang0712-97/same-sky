@@ -246,6 +246,7 @@
       let rooms = D.rooms;   // 방은 서버에 아직 없어도(스키마 미적용) 나머지 기능이 멈추면 안 되므로 따로 받음
       try { const rl = await api().getRooms(S.code); rooms = { me: null, pt: null }; (rl || []).forEach(x => { if (x && (x.slot === 'a' || x.slot === 'b')) rooms[x.slot === S.slot ? 'me' : 'pt'] = Room.sanitize(x.room); }); } catch (e) { }
       const roomChanged = JSON.stringify(rooms) !== JSON.stringify(D.rooms);
+      if (roomChanged && D.rooms.pt && rooms.pt && JSON.stringify(rooms.pt) !== JSON.stringify(D.rooms.pt) && pt && !$('v-room').classList.contains('on')) toast(pt.name + '님이 방을 꾸몄어요');
       D = { partner: pt, photos: ph, notes: nt, rooms };
       notifyArrivals();
       if (roomChanged && !roomEditing) drawRoom();
@@ -514,15 +515,16 @@
   function drawRoom() {
     const mine = roomTab === 'me', r = mine ? myRoom() : D.rooms.pt, st = $('rstage');
     if (!$('v-room').classList.contains('on')) return;
-    roomView = Room.mount(st, { room: r || Room.emptyRoom(), editable: mine, onChange: mine ? saveRoomSoon : null, onSelect: mine ? paintSel : null });
+    roomView = Room.mount(st, { avatarUrl: (mine ? S.me : D.partner) ? Av.layerUrl((mine ? S.me : D.partner).avatar) : '', room: r || Room.emptyRoom(), editable: mine, onChange: mine ? saveRoomSoon : null, onSelect: mine ? paintSel : null });
     $('tabRMe').classList.toggle('on', mine); $('tabRPt').classList.toggle('on', !mine);
-    $('rtools').hidden = !mine; $('rsel').hidden = true;
+    $('rtools').hidden = !mine; $('rsel').hidden = true; paintMeBtn();
     const who = mine ? S.me.name : (D.partner ? D.partner.name : '상대');
     $('roomTitle').textContent = mine ? '내 방' : who + '의 방';
     $('roomEmpty').textContent = !mine && !(r && r.items.length) ? who + '의 방은 아직 비어 있어요.' : '';
     $('roomEmpty').style.display = $('roomEmpty').textContent ? 'block' : 'none';
   }
-  function paintSel(it) { $('rsel').hidden = !it; if (it) $('rselName').textContent = Room.DEFS[it.t][0] + ' 선택됨'; }
+  function paintMeBtn() { $('rMe').textContent = roomView && roomView.hasMe() ? '☺ 내 캐릭터 치우기' : '☺ 내 캐릭터 세우기'; }
+  function paintSel(it) { paintMeBtn(); $('rsel').hidden = !it; if (it) $('rselName').textContent = Room.DEFS[it.t][0] + ' 선택됨'; }
   function saveRoomSoon(room) {   // 끌기를 멈추고 0.8초 뒤 저장 (서버 호출 줄이기)
     roomEditing = true; D.rooms.me = Room.sanitize(room);
     if (S.mode !== 'local') { S.room = D.rooms.me; save(); }   // 서버가 못 받아도 이 기기엔 남김
@@ -620,6 +622,7 @@
   $('addNote').onclick = addNote; enterKey($('noteIn'), addNote);
   $('goRoom').onclick = () => openRoom('me'); $('backR').onclick = () => view('v-home');
   $('tabRMe').onclick = () => { roomTab = 'me'; drawRoom(); }; $('tabRPt').onclick = () => { roomTab = 'pt'; drawRoom(); };
+  $('rMe').onclick = () => { if (!roomView) return; if (roomView.toggleMe() === null) toast('가구는 ' + Room.MAX_ITEMS + '개까지 놓을 수 있어요'); paintMeBtn(); };
   $('rFlip').onclick = () => roomView && roomView.flip(); $('rDel').onclick = () => roomView && roomView.remove();
   $('rWall').onclick = () => roomView && roomView.theme('wall', 1); $('rFloor').onclick = () => roomView && roomView.theme('floor', 1);
   $('rClear').onclick = () => { if (roomView && roomView.room.items.length && confirm('방의 가구를 모두 치울까요?')) roomView.clear(); };
