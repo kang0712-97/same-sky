@@ -84,33 +84,24 @@
 
   <!-- 3. 홈 -->
   <div class="view" id="v-home">
-   <div class="twin">
+   <div class="twin" id="twin">
+    <button class="news" id="news" type="button" hidden></button>
     <div class="badge" id="diff">시차</div>
     <div class="pane"><div id="st-me"></div><div class="plate"><div class="who"><img id="pf-me" class="pf" hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><div><b id="n-me">나</b><div class="sub"><img id="moonIcon" alt="" style="width:15px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><span id="w-me"></span></div></div></div><div class="t" id="t-me">--:--</div></div></div>
     <div class="pane" style="position:relative"><div id="st-pt"></div>
      <div class="wait" id="wait" hidden><div>상대를 기다리는 중이에요</div><div>코드 <b id="waitCode"></b></div><button class="btn small" id="copyWait" type="button">초대 링크 보내기</button></div>
      <div class="plate"><div class="who"><img id="pf-pt" class="pf" hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><div><b id="n-pt">상대</b><div class="sub"><span id="w-pt"></span></div></div></div><div class="t" id="t-pt">--:--</div></div></div>
    </div>
-   <button class="news" id="news" type="button" hidden></button>
    <div class="strip" id="strip"></div>
    <div class="foot">
     <canvas id="globe" width="81" height="81" style="width:130px;image-rendering:pixelated" aria-label="두 도시를 잇는 지구본"></canvas>
     <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px">
      <div style="font-size:13px;font-weight:bold" id="route"></div>
      <div style="font-size:13px" id="moonTxt"></div>
-     <div class="btns big"><button class="btn p" id="goTown">▶ 상대 동네 가보기</button><button class="btn" id="photo">▣ 오늘의 사진 보내기 (0/3)</button></div>
+     <div class="btns big"><button class="btn p" id="goTown">▶ 상대 방 가기</button><button class="btn" id="photo">▣ 오늘의 사진 보내기 (0/3)</button></div>
      <div class="btns"><button class="btn" id="goRoom">⌂ 내 방</button><button class="btn" id="goPhotos">사진함</button><button class="btn" id="goNotes">쪽지함</button></div>
     </div>
    </div>
-  </div>
-
-  <!-- 4. 동네 -->
-  <div class="view town" id="v-town">
-   <div class="head"><b id="townTitle"></b><button class="btn small" id="back">◀ 돌아가기</button></div>
-   <div class="tabs"><button class="tab on" id="tabPt">상대 동네</button><button class="tab" id="tabMe">내 동네 (받은 쪽지)</button></div>
-   <div style="max-width:560px;margin:0 auto;border-left:4px solid var(--ink);border-right:4px solid var(--ink)"><div id="st-town"></div></div>
-   <div class="emptyhint" id="noteEmpty"></div>
-   <div class="foot" id="noteForm" style="border-top:4px solid var(--ink)"><input id="noteIn" aria-label="쪽지 내용" maxlength="24" placeholder="쪽지 남기기 (최대 24자)"><button class="btn p small" id="addNote">붙이기</button></div>
   </div>
 
   <!-- 5. 사진함 -->
@@ -132,6 +123,7 @@
    <div class="tabs"><button class="tab on" id="tabRMe">내 방</button><button class="tab" id="tabRPt">상대 방 구경</button></div>
    <div class="rstage" id="rstage"></div>
    <div class="emptyhint" id="roomEmpty"></div>
+   <div class="foot" id="noteForm" hidden><input id="noteIn" aria-label="쪽지 내용" maxlength="24" placeholder="상대 방에 쪽지 붙이기 (최대 24자)"><button class="btn p small" id="addNote" type="button">붙이기</button></div>
    <div class="rtools" id="rtools">
     <div class="rsel" id="rsel" hidden><span id="rselName"></span><button class="btn small" id="rFlip" type="button">↔ 뒤집기</button><button class="btn small" id="rDel" type="button">✕ 치우기</button></div>
     <button class="btn small" id="rMe" type="button" style="align-self:flex-start">☺ 내 캐릭터 세우기</button>
@@ -147,7 +139,7 @@
   <div class="modal" id="m-photo" hidden>
    <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="mPhotoT">
     <h3 id="mPhotoT">오늘의 사진 보내기</h3>
-    <label class="btn small">사진 선택 / 촬영<input id="pFile" type="file" accept="image/*" capture="environment" hidden></label>
+    <div class="btns"><label class="btn small">앨범에서 고르기<input id="pFile" type="file" accept="image/*" hidden></label><label class="btn small">카메라로 찍기<input id="pCam" type="file" accept="image/*" capture="environment" hidden></label></div>
     <img id="pPrev" class="pprev" hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
     <label class="inl"><input type="checkbox" id="pdot"> 도트 사진으로 보내기</label>
     <input id="pCap" aria-label="사진에 붙일 한마디" maxlength="30" placeholder="한마디 (선택, 최대 30자)">

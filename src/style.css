@@ -181,7 +181,6 @@ img.th{width:76px;height:76px;object-fit:cover;border:3px solid var(--ink);curso
 }
 
 /* 새 소식 배너 · 하트 표시 */
-.news{display:block;width:100%;font-family:inherit;font-size:14px;font-weight:bold;text-align:center;padding:12px;border:0;border-top:4px solid var(--ink);background:#ffe9a8;color:var(--ink);cursor:pointer;animation:newsb 1.6s steps(1) infinite}
 .news:hover{background:var(--ink);color:#ffe9a8}
 .news[hidden]{display:none}
 @keyframes newsb{50%{background:#fff3c8}}
@@ -239,3 +238,12 @@ img.th{width:76px;height:76px;object-fit:cover;border:3px solid var(--ink);curso
 #connBox.invited #fsCreate legend::after{content:" (이미 코드가 있다면 필요 없어요)";font-weight:normal;opacity:.7}
 #fsDemo .btn{align-self:flex-start;min-width:0;flex:none}
 #connBox.invited>h2,#connBox.invited>.hint{order:-2}
+
+/* 새 소식 팝업: 캐릭터 장면 맨 위에 떠서 들어오자마자 보이게 */
+.twin .news{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:9;width:max-content;max-width:92%;padding:9px 14px;font-family:inherit;font-size:14px;font-weight:bold;text-align:center;border:3px solid var(--ink);background:#ffe9a8;color:var(--ink);box-shadow:3px 3px 0 var(--ink);cursor:pointer;animation:newsb 1.6s steps(1) infinite}
+.twin .news::after{content:"";position:absolute;left:50%;bottom:-9px;width:12px;height:12px;background:#ffe9a8;border-right:3px solid var(--ink);border-bottom:3px solid var(--ink);transform:translateX(-50%) rotate(45deg)}
+.twin.hasnews .badge{top:64px}
+.rnotes{position:absolute;inset:0;pointer-events:none;z-index:600}
+.rnotes .notebtn{pointer-events:auto}
+.rbubble{position:absolute;left:5%;right:5%;top:4%;z-index:700;background:var(--paper);border:3px solid var(--ink);padding:8px 10px;font-size:13px;line-height:1.4;box-shadow:3px 3px 0 var(--ink);display:none}
+.rbubble.on{display:block;animation:pop .25s steps(3)}

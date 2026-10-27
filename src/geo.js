@@ -73,6 +73,82 @@ KR|울산|Ulsan|35.54|129.31|Asia/Seoul
 KR|수원|Suwon|37.26|127.03|Asia/Seoul
 KR|제주|Jeju|33.50|126.53|Asia/Seoul
 KR|서울|Seoul|37.57|126.98|Asia/Seoul
+KR|성남|Seongnam|37.42|127.13|Asia/Seoul
+KR|의정부|Uijeongbu|37.74|127.05|Asia/Seoul
+KR|안양|Anyang|37.39|126.96|Asia/Seoul
+KR|부천|Bucheon|37.50|126.77|Asia/Seoul
+KR|광명|Gwangmyeong|37.48|126.86|Asia/Seoul
+KR|평택|Pyeongtaek|36.99|127.09|Asia/Seoul
+KR|동두천|Dongducheon|37.90|127.06|Asia/Seoul
+KR|안산|Ansan|37.32|126.83|Asia/Seoul
+KR|고양|Goyang|37.66|126.83|Asia/Seoul
+KR|과천|Gwacheon|37.43|126.99|Asia/Seoul
+KR|구리|Guri|37.59|127.13|Asia/Seoul
+KR|남양주|Namyangju|37.64|127.22|Asia/Seoul
+KR|오산|Osan|37.15|127.07|Asia/Seoul
+KR|시흥|Siheung|37.38|126.80|Asia/Seoul
+KR|군포|Gunpo|37.36|126.94|Asia/Seoul
+KR|의왕|Uiwang|37.34|126.97|Asia/Seoul
+KR|하남|Hanam|37.54|127.21|Asia/Seoul
+KR|용인|Yongin|37.24|127.18|Asia/Seoul
+KR|파주|Paju|37.76|126.78|Asia/Seoul
+KR|이천|Icheon|37.27|127.43|Asia/Seoul
+KR|안성|Anseong|37.01|127.28|Asia/Seoul
+KR|김포|Gimpo|37.62|126.72|Asia/Seoul
+KR|화성|Hwaseong|37.20|126.83|Asia/Seoul
+KR|광주(경기)|Gwangju Gyeonggi|37.43|127.26|Asia/Seoul
+KR|양주|Yangju|37.79|127.05|Asia/Seoul
+KR|포천|Pocheon|37.89|127.20|Asia/Seoul
+KR|여주|Yeoju|37.30|127.64|Asia/Seoul
+KR|춘천|Chuncheon|37.88|127.73|Asia/Seoul
+KR|원주|Wonju|37.34|127.95|Asia/Seoul
+KR|강릉|Gangneung|37.75|128.88|Asia/Seoul
+KR|동해|Donghae|37.52|129.11|Asia/Seoul
+KR|태백|Taebaek|37.16|128.99|Asia/Seoul
+KR|속초|Sokcho|38.21|128.59|Asia/Seoul
+KR|삼척|Samcheok|37.45|129.17|Asia/Seoul
+KR|청주|Cheongju|36.64|127.49|Asia/Seoul
+KR|충주|Chungju|36.99|127.93|Asia/Seoul
+KR|제천|Jecheon|37.13|128.19|Asia/Seoul
+KR|천안|Cheonan|36.82|127.11|Asia/Seoul
+KR|공주|Gongju|36.45|127.12|Asia/Seoul
+KR|보령|Boryeong|36.33|126.61|Asia/Seoul
+KR|아산|Asan|36.79|127.00|Asia/Seoul
+KR|서산|Seosan|36.78|126.45|Asia/Seoul
+KR|논산|Nonsan|36.19|127.10|Asia/Seoul
+KR|계룡|Gyeryong|36.27|127.25|Asia/Seoul
+KR|당진|Dangjin|36.89|126.65|Asia/Seoul
+KR|세종|Sejong|36.48|127.29|Asia/Seoul
+KR|전주|Jeonju|35.82|127.15|Asia/Seoul
+KR|군산|Gunsan|35.97|126.74|Asia/Seoul
+KR|익산|Iksan|35.95|126.96|Asia/Seoul
+KR|정읍|Jeongeup|35.57|126.86|Asia/Seoul
+KR|남원|Namwon|35.42|127.39|Asia/Seoul
+KR|김제|Gimje|35.80|126.88|Asia/Seoul
+KR|목포|Mokpo|34.81|126.39|Asia/Seoul
+KR|여수|Yeosu|34.76|127.66|Asia/Seoul
+KR|순천|Suncheon|34.95|127.49|Asia/Seoul
+KR|나주|Naju|35.02|126.71|Asia/Seoul
+KR|광양|Gwangyang|34.94|127.70|Asia/Seoul
+KR|포항|Pohang|36.02|129.34|Asia/Seoul
+KR|경주|Gyeongju|35.86|129.22|Asia/Seoul
+KR|김천|Gimcheon|36.14|128.11|Asia/Seoul
+KR|안동|Andong|36.57|128.73|Asia/Seoul
+KR|구미|Gumi|36.12|128.34|Asia/Seoul
+KR|영주|Yeongju|36.81|128.62|Asia/Seoul
+KR|영천|Yeongcheon|35.97|128.94|Asia/Seoul
+KR|상주|Sangju|36.41|128.16|Asia/Seoul
+KR|문경|Mungyeong|36.59|128.20|Asia/Seoul
+KR|경산|Gyeongsan|35.83|128.74|Asia/Seoul
+KR|창원|Changwon|35.23|128.68|Asia/Seoul
+KR|진주|Jinju|35.18|128.11|Asia/Seoul
+KR|통영|Tongyeong|34.85|128.43|Asia/Seoul
+KR|사천|Sacheon|35.00|128.06|Asia/Seoul
+KR|김해|Gimhae|35.23|128.88|Asia/Seoul
+KR|밀양|Miryang|35.50|128.75|Asia/Seoul
+KR|거제|Geoje|34.88|128.62|Asia/Seoul
+KR|양산|Yangsan|35.34|129.04|Asia/Seoul
+KR|서귀포|Seogwipo|33.25|126.56|Asia/Seoul
 JP|도쿄|Tokyo|35.68|139.69|Asia/Tokyo
 JP|오사카|Osaka|34.69|135.50|Asia/Tokyo
 JP|교토|Kyoto|35.01|135.77|Asia/Tokyo
@@ -165,10 +241,11 @@ MX|칸쿤|Cancun|21.16|-86.85|America/Cancun`;
   // q: 사용자가 입력한 글자 — 이름에 "포함"되면 결과에 나옴
   async function search(cc, q) {
     q = q.trim();
+    if (cc === 'KR' && q.length > 1) q = q.replace(/[시군]$/, '');   // '전주시' → '전주'
     if (!q) return [];
     const ql = q.toLowerCase(), cn = country(cc);
     const out = [];
-    const push = r => { if (!out.some(o => Math.abs(o.lat - r.lat) < .25 && Math.abs(o.lon - r.lon) < .25)) out.push(r); };
+    const push = r => { const d = cc === 'KR' ? .03 : .25; if (!out.some(o => Math.abs(o.lat - r.lat) < d && Math.abs(o.lon - r.lon) < d)) out.push(r); };
     CITIES.filter(c => c.cc === cc && (c.name.includes(q) || c.en.toLowerCase().includes(ql)))
       .forEach(c => push({ name: c.name, label: c.name + ' (' + c.en + ')', country: cn.name, cc, lat: c.lat, lon: c.lon, tz: c.tz }));
     if (cn.capital.includes(q)) push({ name: cn.capital, label: cn.capital + ' (수도)', country: cn.name, cc, lat: cn.lat, lon: cn.lon, tz: cn.tz });

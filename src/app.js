@@ -22,7 +22,7 @@
     if (c) { try { history.replaceState(null, '', location.pathname); } catch (e) { } }
     return /^[0-9A-F]{4,8}$/.test(c) ? c : '';
   })();
-  let draft = null, townSide = 'pt', notesTab = 'in', editing = false, pending = null, pendingMe = null;
+  let draft = null, notesTab = 'in', editing = false, pending = null, pendingMe = null;
   const newToken = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
   const otherSlot = () => S.slot === 'a' ? 'b' : 'a';
 
@@ -115,7 +115,7 @@
     $('goTown').disabled = !pt;
     const d = $('desk'); d.style.setProperty('--l', A.sky[W.me.kind][0]); d.style.setProperty('--r', A.sky[W.pt.kind][0]);
     SIDES.forEach(s => { const pf = $('pf-' + s), pr = person(s) && okProfile(person(s).profile) ? person(s).profile : null; pf.hidden = !pr; if (pr) pf.src = pr; });
-    paintTown(); paintStrip(); photoBtn(); paintRoute(); paintNews();
+    paintStrip(); photoBtn(); paintRoute(); paintNews();
   }
   // 지구본 + "서울 ━ 뉴욕 · 거리 · 시차" 요약
   function paintRoute() {
@@ -218,7 +218,8 @@
     const u = unread(), box = $('news'), parts = [];
     if (u.np) parts.push('사진 ' + u.np); if (u.nn) parts.push('쪽지 ' + u.nn); if (u.nh) parts.push('♥ ' + u.nh);
     box.hidden = !parts.length;
-    if (parts.length) box.textContent = '● ' + D.partner.name + '의 새 소식이 도착했어요 · ' + parts.join(' · ');
+    if (parts.length) box.textContent = '● ' + D.partner.name + '님의 새 소식 · ' + parts.join(' · ');
+    $('twin').classList.toggle('hasnews', !!parts.length);
     $('goPhotos').textContent = '사진함' + (u.np + u.nh ? ' ●' + (u.np + u.nh) : ''); $('goNotes').textContent = '쪽지함' + (u.nn ? ' ●' + u.nn : '');
   }
   let prevU = null;
@@ -250,7 +251,7 @@
       D = { partner: pt, photos: ph, notes: nt, rooms };
       notifyArrivals();
       if (roomChanged && !roomEditing) drawRoom();
-      if (changed || !quiet) { paint(); if (!hadPt && pt) real(); drawPhotos(); drawNotesBox(); }
+      if (changed || !quiet) { paint(); if (!hadPt && pt) real(); drawPhotos(); drawNotesBox(); drawRoomNotes(); }
     } catch (e) { if (!quiet) toast(explain(e)); }
   }
 
@@ -327,34 +328,34 @@
     } catch (e) { toast(explain(e)); $('pSend').disabled = false; }
   }
 
-  /* ---------- 상대/내 동네 + 쪽지 ---------- */
-  function townNotes() { return townSide === 'pt' ? D.notes.filter(n => n.slot === S.slot) : D.notes.filter(n => n.slot !== S.slot); }
-  function paintTown() {
-    const el = $('st-town'); if (!el.firstChild) return;
-    const p = person(townSide); if (!p) return;
-    apply(el, townSide);
-    $('townTitle').textContent = p.name + '의 동네 · ' + p.city.name + ' · ' + KL[W[townSide].kind] + ' ' + W[townSide].temp + '°';
-    $('tabPt').classList.toggle('on', townSide === 'pt'); $('tabMe').classList.toggle('on', townSide === 'me');
-    $('noteForm').hidden = townSide !== 'pt';
-    const box = el.querySelector('.notes'); box.innerHTML = '';
-    const list = townNotes();
+  /* ---------- 방 위의 쪽지 (받은 쪽지는 내 방, 내가 보낸 쪽지는 상대 방) ---------- */
+  const roomNotes = () => roomTab === 'pt' ? D.notes.filter(n => n.slot === S.slot) : D.notes.filter(n => n.slot !== S.slot);
+  function drawRoomNotes() {
+    const st = $('rstage'); if (!st || !$('v-room').classList.contains('on')) return;
+    let box = st.querySelector('.rnotes'); if (box) box.remove();
+    box = document.createElement('div'); box.className = 'rnotes'; st.appendChild(box);
+    const bub = document.createElement('div'); bub.className = 'rbubble'; st.querySelectorAll('.rbubble').forEach(x => x.remove()); st.appendChild(bub);
+    const list = roomNotes();
     list.forEach(n => {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'notebtn'; b.style.left = n.x + '%'; b.style.top = n.y + '%';
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'notebtn'; b.style.left = clampPct(n.x) + '%'; b.style.top = clampPct(n.y) + '%';
       b.setAttribute('aria-label', '쪽지 읽기 · ' + nameOf(n.slot));
       const i = document.createElement('img'); i.src = A.note; i.className = 'note'; i.alt = ''; b.appendChild(i);
-      b.onclick = e => { e.stopPropagation(); say(el, n.body); };
+      b.onclick = e => { e.stopPropagation(); bub.textContent = nameOf(n.slot) + ': ' + n.body; bub.classList.remove('on'); void bub.offsetWidth; bub.classList.add('on'); clearTimeout(bub._t); bub._t = setTimeout(() => bub.classList.remove('on'), 3200); };
       box.appendChild(b);
     });
-    $('noteEmpty').textContent = townSide === 'pt' ? '아직 보낸 쪽지가 없어요. 첫 쪽지를 남겨보세요.' : '아직 받은 쪽지가 없어요.';
-    $('noteEmpty').style.display = list.length ? 'none' : 'block';
+    $('noteForm').hidden = roomTab !== 'pt' || !D.partner;
+    if (roomTab === 'me') markNotesSeen();
+    const hint = $('roomEmpty');
+    if (roomTab === 'pt' && D.partner && !list.length && D.rooms.pt && D.rooms.pt.items.length) hint.textContent = '쪽지를 써서 ' + D.partner.name + '님의 방에 붙여 보세요.';
   }
+  const clampPct = v => Math.max(2, Math.min(88, Number(v) || 0));
   let sending = false;
   async function addNote() {
     const v = $('noteIn').value.trim(); if (!v || sending) return;
     sending = true; $('addNote').disabled = true;
     try {
-      await api().addNote(S.code, S.slot, { body: v, x: 8 + Math.random() * 78, y: 77 + Math.random() * 13 });
-      $('noteIn').value = ''; toast('쪽지를 붙였어요'); await refresh(false);
+      await api().addNote(S.code, S.slot, { body: v, x: 8 + Math.random() * 78, y: 8 + Math.random() * 44 });
+      $('noteIn').value = ''; toast('쪽지를 붙였어요'); await refresh(false); drawRoomNotes();
     } catch (e) { toast(explain(e)); }
     sending = false; $('addNote').disabled = false;
   }
@@ -522,6 +523,7 @@
     $('roomTitle').textContent = mine ? '내 방' : who + '의 방';
     $('roomEmpty').textContent = !mine && !(r && r.items.length) ? who + '의 방은 아직 비어 있어요.' : '';
     $('roomEmpty').style.display = $('roomEmpty').textContent ? 'block' : 'none';
+    drawRoomNotes(); $('roomEmpty').style.display = $('roomEmpty').textContent ? 'block' : 'none';
   }
   function paintMeBtn() { $('rMe').textContent = roomView && roomView.hasMe() ? '☺ 내 캐릭터 치우기' : '☺ 내 캐릭터 세우기'; }
   function paintSel(it) { paintMeBtn(); $('rsel').hidden = !it; if (it) $('rselName').textContent = Room.DEFS[it.t][0] + ' 선택됨'; }
@@ -550,10 +552,9 @@
 
   function startHome() {
     if (!started) {
-      mk($('st-me')); mk($('st-pt')); mk($('st-town'));
+      mk($('st-me')); mk($('st-pt'));
       $('st-me').addEventListener('click', e => heart($('st-me'), e));
       $('st-pt').addEventListener('click', e => heart($('st-pt'), e));
-      $('st-town').addEventListener('click', e => { if (!e.target.classList.contains('note')) heart($('st-town'), e); });   // 하트만, 말풍선 없음
       started = true;
     }
     $('editMe').hidden = false; $('demo').hidden = S.mode !== 'local'; $('codeBtn').hidden = S.mode === 'local';
@@ -616,9 +617,7 @@
     try { await navigator.clipboard.writeText(url); toast('초대 링크를 복사했어요'); } catch (e) { toast('초대 링크: ' + url); }
   };
   $('copyWait').onclick = $('codeBtn').onclick;
-  $('goTown').onclick = () => { townSide = 'pt'; paintTown(); view('v-town'); };
-  $('tabPt').onclick = () => { townSide = 'pt'; paintTown(); }; $('tabMe').onclick = () => { townSide = 'me'; paintTown(); markNotesSeen(); };
-  $('back').onclick = () => view('v-home');
+  $('goTown').onclick = () => openRoom('pt');
   $('addNote').onclick = addNote; enterKey($('noteIn'), addNote);
   $('goRoom').onclick = () => openRoom('me'); $('backR').onclick = () => view('v-home');
   $('tabRMe').onclick = () => { roomTab = 'me'; drawRoom(); }; $('tabRPt').onclick = () => { roomTab = 'pt'; drawRoom(); };
@@ -630,8 +629,8 @@
   $('goPhotos').onclick = () => { drawPhotos(); view('v-photos'); markPhotosSeen(); }; $('backP').onclick = () => view('v-home');
   $('goNotes').onclick = () => { drawNotesBox(); view('v-notes'); markNotesSeen(); }; $('backN').onclick = () => view('v-home');
   $('tabIn').onclick = () => { notesTab = 'in'; drawNotesBox(); }; $('tabOut').onclick = () => { notesTab = 'out'; drawNotesBox(); };
-  $('photo').onclick = () => { pending = null; $('pPrev').hidden = true; $('pCap').value = ''; $('pSend').disabled = true; $('pdot').checked = false; $('pFile').value = ''; $('m-photo').hidden = false; };
-  $('pFile').onchange = e => { if (e.target.files[0]) onPhotoFile(e.target.files[0]); };
+  $('photo').onclick = () => { pending = null; $('pPrev').hidden = true; $('pCap').value = ''; $('pSend').disabled = true; $('pdot').checked = false; $('pFile').value = ''; $('pCam').value = ''; $('m-photo').hidden = false; };
+  $('pFile').onchange = $('pCam').onchange = e => { if (e.target.files[0]) onPhotoFile(e.target.files[0]); };
   $('pdot').onchange = () => { if (!pending || !pending.im) return; pending.data = prepare(pending.im, $('pdot').checked); $('pPrev').src = pending.data; $('pPrev').className = $('pdot').checked ? 'pix' : ''; };
   $('pCancel').onclick = () => { $('m-photo').hidden = true; }; $('pSend').onclick = sendPhoto;
   $('m-view').onclick = () => { $('m-view').hidden = true; }; $('lbClose').onclick = e => { e.stopPropagation(); $('m-view').hidden = true; };
@@ -640,7 +639,7 @@
     try { await api().heartPhoto(S.code, curPhoto.id, S.slot); await refresh(true); const np = D.photos.find(x => String(x.id) === String(curPhoto.id)); if (np) openPhoto(np); }
     catch (err) { toast(explain(err)); }
   };
-  $('news').onclick = () => { const u = unread(); if (u.np || u.nh) { drawPhotos(); view('v-photos'); markPhotosSeen(); } else { notesTab = 'in'; drawNotesBox(); view('v-notes'); markNotesSeen(); } };
+  $('news').onclick = () => { const u = unread(); if (u.np || u.nh) { drawPhotos(); view('v-photos'); markPhotosSeen(); } else { openRoom('me'); } };
   $('demoSend').onclick = async () => { demoPartnerSends(1); await refresh(true); };
   $('real').onclick = real;
   $('reset').onclick = $('resetEdit').onclick = () => { if (confirm('이 기기에 저장된 정보를 지우고 처음부터 다시 할까요? (서버의 사진·쪽지는 코드로 다시 들어올 수 있지만, 내 자리로 돌아오려면 "기기 변경 열쇠"가 필요해요. 열쇠는 "내 정보"에서 복사할 수 있어요)')) { try { localStorage.removeItem(KEY); localStorage.removeItem(LKEY); } catch (e) { } location.reload(); } };
