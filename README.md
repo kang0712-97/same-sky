@@ -22,6 +22,9 @@ AI 활용 교육 실습 프로젝트 — 목적: git으로 관리하며 **API를
 - 서버 없이 둘러보는 "혼자 체험하기" 모드 (상대의 예시 사진·쪽지 포함, "무노가 사진·쪽지 보내기" 버튼으로 새 소식 시연) — 두 사람의 나라·도시를 각각 골라 시간·시차·거리·날씨·배경이 어떻게 달라지는지 바로 확인
 - 지구본은 선택한 두 도시에 맞춰 실시간으로 그려짐 (src/globe.js)
 
+## 이어서 작업하기
+새 채팅/새 담당자는 [CLAUDE.md](CLAUDE.md) → [docs/HANDOFF.md](docs/HANDOFF.md) 순서로 읽으세요. 현재 상태, 설계 결정, 함정, 테스트 방법, 남은 일이 정리되어 있습니다.
+
 ## 사용 API
 - [Open-Meteo Forecast](https://open-meteo.com/) — 현재 날씨, 일출/일몰 (키 불필요)
 - [Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api) — 도시 검색 (키 불필요)
