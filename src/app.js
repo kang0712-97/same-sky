@@ -175,7 +175,12 @@
 
   /* ---------- 공통 UI ---------- */
   function toast(t) { const e = $('toast'); e.textContent = t; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 2600); }
-  function view(id) { document.querySelectorAll('.view').forEach(v => v.classList.remove('on')); $(id).classList.add('on'); }
+  function view(id) { document.querySelectorAll('.view').forEach(v => v.classList.remove('on')); $(id).classList.add('on'); document.body.dataset.view = id; paintTabbar(); window.scrollTo(0, 0); }
+  function paintTabbar() {   // 모바일 하단 탭바: 지금 화면 표시 + 안 본 소식 점
+    const v = document.body.dataset.view, cur = v === 'v-home' ? 'tbHome' : v === 'v-room' ? (roomTab === 'pt' ? 'tbPt' : 'tbRoom') : v === 'v-photos' ? 'tbPhotos' : v === 'v-notes' ? 'tbNotes' : '';
+    document.querySelectorAll('#tabbar button').forEach(b => { b.classList.toggle('on', b.id === cur); if (b.id === cur) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+    document.body.classList.toggle('hasnav', !!(S && S.me && started && v !== 'v-setup' && v !== 'v-connect'));
+  }
   function heart(stage, e) {
     const r = stage.getBoundingClientRect(), h = document.createElement('img');
     h.src = A.heart; h.className = 'heart'; h.alt = '';
@@ -220,6 +225,7 @@
     box.hidden = !parts.length;
     if (parts.length) box.textContent = '● ' + D.partner.name + '님의 새 소식 · ' + parts.join(' · ');
     $('twin').classList.toggle('hasnews', !!parts.length);
+    $('tbPhotos').classList.toggle('unread', !!(u.np + u.nh)); $('tbRoom').classList.toggle('unread', !!u.nn);
     $('goPhotos').textContent = '사진함' + (u.np + u.nh ? ' ●' + (u.np + u.nh) : ''); $('goNotes').textContent = '쪽지함' + (u.nn ? ' ●' + u.nn : '');
   }
   let prevU = null;
@@ -619,8 +625,13 @@
   $('copyWait').onclick = $('codeBtn').onclick;
   $('goTown').onclick = () => openRoom('pt');
   $('addNote').onclick = addNote; enterKey($('noteIn'), addNote);
+  document.querySelectorAll('#tabbar button').forEach(b => b.onclick = () => {
+    const g = b.dataset.go;
+    if (g === 'home') view('v-home'); else if (g === 'room') openRoom('me'); else if (g === 'pt') { if (D.partner) openRoom('pt'); else toast('상대가 연결되면 갈 수 있어요'); }
+    else if (g === 'photos') { drawPhotos(); view('v-photos'); markPhotosSeen(); } else if (g === 'notes') { drawNotesBox(); view('v-notes'); markNotesSeen(); }
+  });
   $('goRoom').onclick = () => openRoom('me'); $('backR').onclick = () => view('v-home');
-  $('tabRMe').onclick = () => { roomTab = 'me'; drawRoom(); }; $('tabRPt').onclick = () => { roomTab = 'pt'; drawRoom(); };
+  $('tabRMe').onclick = () => { roomTab = 'me'; drawRoom(); paintTabbar(); }; $('tabRPt').onclick = () => { roomTab = 'pt'; drawRoom(); paintTabbar(); };
   $('rMe').onclick = () => { if (!roomView) return; if (roomView.toggleMe() === null) toast('가구는 ' + Room.MAX_ITEMS + '개까지 놓을 수 있어요'); paintMeBtn(); };
   $('rFlip').onclick = () => roomView && roomView.flip(); $('rRot').onclick = () => roomView && roomView.rotate(); $('rSm').onclick = () => roomView && roomView.resize(-1); $('rBg').onclick = () => roomView && roomView.resize(1); $('rDel').onclick = () => roomView && roomView.remove();
   $('rWall').onclick = () => roomView && roomView.theme('wall', 1); $('rFloor').onclick = () => roomView && roomView.theme('floor', 1);

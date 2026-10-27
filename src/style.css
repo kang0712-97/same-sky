@@ -247,3 +247,49 @@ img.th{width:76px;height:76px;object-fit:cover;border:3px solid var(--ink);curso
 .rnotes .notebtn{pointer-events:auto}
 .rbubble{position:absolute;left:5%;right:5%;top:4%;z-index:700;background:var(--paper);border:3px solid var(--ink);padding:8px 10px;font-size:13px;line-height:1.4;box-shadow:3px 3px 0 var(--ink);display:none}
 .rbubble.on{display:block;animation:pop .25s steps(3)}
+
+/* ===== 모바일 ===== */
+.tabbar{display:none}
+@media (max-width:700px){
+  body{padding:8px 6px calc(76px + env(safe-area-inset-bottom))}
+  body.hasnav .tabbar{display:grid}
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;grid-template-columns:repeat(5,minmax(0,1fr));background:#f7f1de;border-top:4px solid #1f2420;padding-bottom:env(safe-area-inset-bottom)}
+  .tabbar button{position:relative;white-space:nowrap;min-width:0;width:100%;font-family:inherit;font-size:11px;font-weight:bold;color:#1f2420;background:#f7f1de;border:0;border-right:2px solid #1f2420;min-height:56px;padding:6px 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+  .tabbar button:last-child{border-right:0}
+  .tabbar button .ti{font-size:18px;line-height:1}
+  .tabbar button.on{background:#1f2420;color:#f7f1de}
+  .tabbar button.unread::after{content:"";position:absolute;top:6px;left:calc(50% + 8px);width:10px;height:10px;border-radius:50%;background:#d9534f;border:2px solid #f7f1de}
+  /* 두 장면은 나란히(같은 하늘 느낌 유지), 이름·시각은 좁은 칸에 맞게 세로로 */
+  .twin{flex-direction:row!important}
+  .twin>.pane:nth-child(2),.twin>.pane:nth-child(3){order:0}
+  .twin>.pane:nth-child(2){order:0}
+  .pane+.pane{border-left:4px solid var(--ink)}
+  .badge{position:absolute!important;left:50%;top:8px;transform:translateX(-50%);border-width:3px;box-shadow:2px 2px 0 var(--ink);padding:3px 8px;font-size:11px;white-space:nowrap}
+  .twin.hasnews .badge{top:62px}
+  .twin .news{font-size:12px;padding:7px 10px;top:8px;max-width:96%}
+  .stage,.wait{aspect-ratio:110/120!important}
+  .plate{flex-direction:column;align-items:flex-start;gap:2px;padding:8px 8px}
+  .plate .t{font-size:22px}.plate b{font-size:13px;white-space:normal}.plate .sub{font-size:11px;flex-wrap:wrap;margin-top:2px}
+  .pf{width:24px;height:24px;border-width:2px}
+  .plate .who{gap:5px}
+  .strip{padding:8px 10px}
+  .foot{padding:10px;gap:10px}
+  #globe{width:96px!important}
+  .foot>div{min-width:0!important}
+  .foot .btns:not(.big){display:none}
+  #goTown{display:none}
+  .btns.big .btn{min-height:48px;font-size:15px}
+  .btn,.tab,.mini,.rcell{min-height:44px}
+  .mini{min-height:34px}
+  .btn.small{min-height:40px}
+  .town .head{padding:8px 10px}
+  .rstage{border-left:0;border-right:0;max-width:none}
+  .rtools{padding:10px}
+  .rpal{grid-template-columns:repeat(4,1fr)}
+  .rsel .btn{flex:1 1 auto}
+  .list{padding:10px}
+  .toast{position:fixed;bottom:calc(76px + env(safe-area-inset-bottom));z-index:70;max-width:92vw}
+  .modal{position:fixed;z-index:80;align-items:flex-end;padding:0}
+  .modal .mbox{width:100%;max-width:none;border-left:0;border-right:0;border-bottom:0}
+}
+label.btn{display:flex;align-items:center;justify-content:center}

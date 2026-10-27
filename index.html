@@ -2,7 +2,8 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f1de">
 <title>Same Sky · 같은 하늘</title>
 <meta name="description" content="서로 다른 하늘 아래, 하나의 하루. 장거리 연애 커플을 위한 도트 일상 공유 서비스.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
@@ -162,6 +163,14 @@
  <div class="rg"><span class="rl">상대</span><select id="rg-country-pt" aria-label="상대의 나라"></select><input id="rg-city-pt" placeholder="도시 (선택, 비우면 수도)" aria-label="상대의 도시"><div class="cities" id="rg-list-pt"></div></div>
  <div class="rgsum" id="rg-sum"></div>
 </div>
+
+<nav class="tabbar" id="tabbar" aria-label="주요 화면">
+ <button type="button" data-go="home" id="tbHome"><span class="ti">⌂</span>홈</button>
+ <button type="button" data-go="room" id="tbRoom"><span class="ti">▣</span>내 방</button>
+ <button type="button" data-go="pt" id="tbPt"><span class="ti">☺</span>상대 방</button>
+ <button type="button" data-go="photos" id="tbPhotos"><span class="ti">◫</span>사진함</button>
+ <button type="button" data-go="notes" id="tbNotes"><span class="ti">✉</span>쪽지함</button>
+</nav>
 
 <script src="src/config.js"></script>
 <script src="src/assets.js"></script>
