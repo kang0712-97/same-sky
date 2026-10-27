@@ -5,6 +5,7 @@
     hair: ['#262425', '#6e462d', '#e2be64', '#aa3c2d', '#ec8caa', '#466ebe', '#bec3cd', '#78509f'],
     top: ['#f9ebdb', '#323237', '#c8463c', '#466ebe', '#509664', '#ebc85a', '#eb96b4', '#7d5aaa', '#969ba0', '#82604a'],
     bottom: ['#364c4f', '#323237', '#c8463c', '#466ebe', '#509664', '#ebc85a', '#eb96b4', '#7d5aaa', '#969ba0', '#82604a'],
+    skin: ['#f6d5b8', '#e9b48f', '#d49a74', '#b57a52', '#8a5636', '#5e3a24'],
     accent: ['#c8463c', '#466ebe', '#ebc85a', '#509664', '#eb96b4', '#7d5aaa', '#f9ebdb', '#323237']
   };
   const INK = [31, 36, 32];
@@ -19,7 +20,7 @@
     if (manifest) return chars;
     manifest = await (await fetch(BASE + 'manifest.json')).json();
     chars = manifest.characters; headItems = manifest.headItems; patterns = manifest.patterns;
-    await Promise.all(chars.map(c => new Promise(res => { const im = new Image(); im.onload = () => { imgs[c.id] = im; res(); }; im.onerror = res; im.src = BASE + c.file; })));
+    await Promise.all(chars.map(c => c.builder ? null : new Promise(res => { const im = new Image(); im.onload = () => { imgs[c.id] = im; res(); }; im.onerror = res; im.src = BASE + c.file; })));
     return chars;
   }
   const byId = id => chars.find(c => c.id === id) || chars[0];
@@ -32,11 +33,11 @@
 
   // avatar: { char, hair, top, bottom, hairStyle, head, glasses, scarf, accent, tpat, bpat }
   function render(av) {
-    const ch = byId(av.char), im = imgs[ch.id], an = ch.anchors || {};
+    const ch = byId(av.char), im = ch.builder ? window.SSBuilder.build(av) : imgs[ch.id], an = ch.anchors || {};
     const W = im.width, Hh = im.height;
     const c = document.createElement('canvas'); c.width = W; c.height = Hh;
     const x = c.getContext('2d'); x.drawImage(im, 0, 0);
-    const id = x.getImageData(0, 0, W, Hh), d = id.data, bb = bbox(d, W, Hh), H = bb.y1 - bb.y0 + 1;
+    const id = x.getImageData(0, 0, W, Hh), d = id.data, bb = ch.builder ? { x0: 44, y0: 42, x1: 65, y1: 107 } : bbox(d, W, Hh), H = bb.y1 - bb.y0 + 1;
     const ox = bb.x0, oy = bb.y0, MX = 21;             // MX: 좌우 대칭 변환 (x' = 21 - x)
     const idx = (lx, ly) => ((oy + ly) * W + (ox + lx)) * 4;
     const inb = (lx, ly) => ox + lx >= 0 && ox + lx < W && oy + ly >= 0 && oy + ly < Hh;
@@ -68,9 +69,9 @@
 
     /* 2) 부위 마스크 → 색 바꾸기 → 무늬 */
     const masks = {};
-    ['hair', 'top', 'bottom'].forEach(part => {
-      const spec = ch.parts[part]; const set = new Set(spec.colors), list = [];
-      for (let ly = 0; ly < H; ly++) {
+    ['skin', 'hair', 'top', 'bottom'].forEach(part => {
+      const spec = ch.parts[part]; if (!spec) return; const set = new Set(spec.colors), list = [];
+      for (let ly = -6; ly < H; ly++) {
         const f = ly / H; if (f < spec.rows[0] || f > spec.rows[1]) continue;
         for (let lx = 0; lx < 22; lx++) if (op(lx, ly) && set.has(get(lx, ly))) list.push([lx, ly]);
       }
@@ -195,8 +196,8 @@
   function headUrl(avatar) {   // 머리·얼굴 위주 확대 썸네일 (옵션 격자용)
     if (avatar.custom) return avatar.thumb;
     const k = JSON.stringify(avatar); if (hcache[k]) return hcache[k];
-    const ch = byId(avatar.char), im = imgs[ch.id], c0 = document.createElement('canvas'); c0.width = im.width; c0.height = im.height;
-    const x0 = c0.getContext('2d'); x0.drawImage(im, 0, 0); const bb = bbox(x0.getImageData(0, 0, im.width, im.height).data, im.width, im.height);
+    const ch = byId(avatar.char); let bb;
+    if (ch.builder) bb = { x0: 44, y0: 42 }; else { const im = imgs[ch.id], c0 = document.createElement('canvas'); c0.width = im.width; c0.height = im.height; const x0 = c0.getContext('2d'); x0.drawImage(im, 0, 0); bb = bbox(x0.getImageData(0, 0, im.width, im.height).data, im.width, im.height); }
     const o = document.createElement('canvas'); o.width = 26; o.height = 26;
     o.getContext('2d').drawImage(render(avatar), bb.x0 - 2, bb.y0 - 8, 26, 26, 0, 0, 26, 26);
     return hcache[k] = o.toDataURL();
@@ -205,6 +206,12 @@
     mouth: [['none', '기본'], ['smile', '미소'], ['open', '활짝'], ['tongue', '메롱'], ['flat', '무표정'], ['pout', '삐죽']],
     cheek: [['none', '없음'], ['blush', '볼터치'], ['freckle', '주근깨'], ['mole', '점']],
     glasses: [['none', '없음'], ['square', '네모'], ['round', '동그라미'], ['sun', '선글라스']],
+    faceShape: [['round', '둥근형'], ['oval', '갸름'], ['square', '각진']],
+    eyes: [['dot', '동그란'], ['tall', '큰 눈'], ['sleepy', '졸린'], ['happy', '웃는']],
+    brows: [['none', '없음'], ['flat', '일자'], ['thick', '굵은'], ['sad', '처진']],
+    beard: [['none', '없음'], ['mustache', '콧수염'], ['goatee', '턱수염'], ['full', '풀수염']],
+    topStyle: [['tee', '티셔츠'], ['hoodie', '후디'], ['jacket', '재킷'], ['sweater', '니트']],
+    bottomStyle: [['pants', '긴바지'], ['shorts', '반바지'], ['skirt', '치마']],
     neck: [['none', '없음'], ['scarf', '목도리'], ['choker', '초커'], ['bow', '나비넥타이'], ['necklace', '목걸이']]
   };
   window.SSAvatar = { headUrl, OPT, load, SWATCH, layerUrl, thumbUrl, list: () => chars, byId, headItems: () => headItems, patterns: () => patterns };

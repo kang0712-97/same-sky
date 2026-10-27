@@ -386,9 +386,11 @@
       if (ch.hairStyles && ch.hairStyles.length > 1) { title('머리 모양'); const g = grid(); ch.hairStyles.forEach(s => cell(g, s.name, V({ hairStyle: s.id }), (a.hairStyle || ch.hairStyles[0].id) === s.id, () => { a.hairStyle = s.id; })); }
       title('머리 색'); swatches('hair', '', Av.SWATCH.hair);
     } else if (avTab === 'face') {
-      const sec = (t, key, list, base) => { title(t); const g = grid(); list.forEach(([id, name]) => cell(g, name, V({ [key]: id === 'none' ? null : id }), (a[key] || 'none') === id || (key === 'glasses' && id === 'square' && a.glasses === true), () => { a[key] = id === 'none' ? null : id; })); };
+      const sec = (t, key, list, def) => { title(t); const g = grid(); list.forEach(([id, name]) => cell(g, name, V({ [key]: id === 'none' ? null : id }), (a[key] || def || 'none') === id || (key === 'glasses' && id === 'square' && a.glasses === true), () => { a[key] = id === 'none' ? null : id; })); };
+      if (ch.builder) { sec('얼굴형', 'faceShape', Av.OPT.faceShape, 'round'); title('피부색'); swatches('skin', '', Av.SWATCH.skin); sec('눈', 'eyes', Av.OPT.eyes, 'dot'); sec('눈썹', 'brows', Av.OPT.brows, 'flat'); sec('수염', 'beard', Av.OPT.beard); }
       sec('입', 'mouth', Av.OPT.mouth); sec('볼 · 점', 'cheek', Av.OPT.cheek); sec('안경', 'glasses', Av.OPT.glasses);
     } else if (avTab === 'cloth') {
+      if (ch.builder) { const t1 = (t, key, list, def) => { title(t); const g = grid(); list.forEach(([id, name]) => cell(g, name, Av.thumbUrl({ ...a, [key]: id }), (a[key] || def) === id, () => { a[key] = id; })); }; t1('상의 종류', 'topStyle', Av.OPT.topStyle, 'tee'); t1('하의 종류', 'bottomStyle', Av.OPT.bottomStyle, 'pants'); }
       title('상의 색'); swatches('top', '', Av.SWATCH.top); title('하의 색'); swatches('bottom', '', Av.SWATCH.bottom);
       title('상의 무늬'); const g1 = grid(); Av.patterns().forEach(s => cell(g1, s.name, Av.thumbUrl({ ...a, tpat: s.id }), (a.tpat || 'none') === s.id, () => { a.tpat = s.id; }));
       title('하의 무늬'); const g2 = grid(); Av.patterns().forEach(s => cell(g2, s.name, Av.thumbUrl({ ...a, bpat: s.id }), (a.bpat || 'none') === s.id, () => { a.bpat = s.id; }));
