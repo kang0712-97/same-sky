@@ -526,7 +526,7 @@
     drawRoomNotes(); $('roomEmpty').style.display = $('roomEmpty').textContent ? 'block' : 'none';
   }
   function paintMeBtn() { $('rMe').textContent = roomView && roomView.hasMe() ? '☺ 내 캐릭터 치우기' : '☺ 내 캐릭터 세우기'; }
-  function paintSel(it) { paintMeBtn(); $('rsel').hidden = !it; if (it) $('rselName').textContent = Room.DEFS[it.t][0] + ' 선택됨'; }
+  function paintSel(it) { paintMeBtn(); $('rsel').hidden = !it; $('rRot').hidden = !(it && Room.ROT.includes(it.t)); if (it) $('rselName').textContent = Room.DEFS[it.t][0] + ' 선택됨'; }
   function saveRoomSoon(room) {   // 끌기를 멈추고 0.8초 뒤 저장 (서버 호출 줄이기)
     roomEditing = true; D.rooms.me = Room.sanitize(room);
     if (S.mode !== 'local') { S.room = D.rooms.me; save(); }   // 서버가 못 받아도 이 기기엔 남김
@@ -622,7 +622,7 @@
   $('goRoom').onclick = () => openRoom('me'); $('backR').onclick = () => view('v-home');
   $('tabRMe').onclick = () => { roomTab = 'me'; drawRoom(); }; $('tabRPt').onclick = () => { roomTab = 'pt'; drawRoom(); };
   $('rMe').onclick = () => { if (!roomView) return; if (roomView.toggleMe() === null) toast('가구는 ' + Room.MAX_ITEMS + '개까지 놓을 수 있어요'); paintMeBtn(); };
-  $('rFlip').onclick = () => roomView && roomView.flip(); $('rDel').onclick = () => roomView && roomView.remove();
+  $('rFlip').onclick = () => roomView && roomView.flip(); $('rRot').onclick = () => roomView && roomView.rotate(); $('rSm').onclick = () => roomView && roomView.resize(-1); $('rBg').onclick = () => roomView && roomView.resize(1); $('rDel').onclick = () => roomView && roomView.remove();
   $('rWall').onclick = () => roomView && roomView.theme('wall', 1); $('rFloor').onclick = () => roomView && roomView.theme('floor', 1);
   $('rClear').onclick = () => { if (roomView && roomView.room.items.length && confirm('방의 가구를 모두 치울까요?')) roomView.clear(); };
   document.addEventListener('keydown', e => { if ((e.key === 'Delete' || e.key === 'Backspace') && roomView && $('v-room').classList.contains('on') && roomTab === 'me' && !/INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) { e.preventDefault(); roomView.remove(); } });

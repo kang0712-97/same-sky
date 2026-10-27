@@ -14,38 +14,47 @@
     lamp: ['스탠드', 'floor', 8, 20, [['y', 0, 0, 8, 7], ['o', 0, 6, 8, 1], ['S', 3, 7, 2, 11], ['N', 1, 18, 6, 2]]],
     plant: ['화분', 'floor', 10, 18, [['G', 1, 4, 3, 4], ['g', 3, 2, 4, 10], ['g', 6, 1, 3, 5], ['G', 7, 5, 3, 4], ['g', 0, 6, 3, 3], ['o', 2, 12, 6, 6], ['N', 2, 12, 6, 1]]],
     rug: ['러그', 'floor', 36, 12, [['p', 1, 0, 34, 12], ['p', 0, 1, 36, 10], ['w', 4, 3, 28, 6], ['r', 8, 5, 20, 2]]],
-    cat: ['고양이', 'floor', 12, 9, [['o', 0, 2, 2, 5], ['o', 1, 3, 9, 5], ['o', 7, 0, 5, 5], ['N', 3, 3, 1, 2], ['N', 5, 3, 1, 2], ['k', 8, 2, 1, 1], ['k', 10, 2, 1, 1], ['p', 9, 3, 1, 1]]],
-    teddy: ['곰인형', 'floor', 10, 11, [['n', 1, 0, 3, 3], ['n', 6, 0, 3, 3], ['n', 2, 2, 6, 5], ['n', 1, 7, 8, 4], ['w', 4, 5, 2, 2], ['k', 3, 4, 1, 1], ['k', 6, 4, 1, 1], ['r', 4, 7, 2, 1]]],
-    cushion: ['하트 쿠션', 'floor', 10, 9, [['r', 1, 0, 3, 2], ['r', 6, 0, 3, 2], ['r', 0, 1, 10, 3], ['r', 1, 4, 8, 2], ['r', 2, 6, 6, 1], ['r', 4, 7, 2, 1], ['p', 2, 1, 1, 1]]],
+    cat: ['고양이', 'floor', 8, 6, [['o', 0, 1, 1, 3], ['o', 1, 2, 5, 3], ['o', 5, 0, 3, 3], ['N', 3, 2, 1, 1], ['k', 6, 1, 1, 1], ['k', 7, 1, 1, 1]]],
+    teddy: ['곰인형', 'floor', 6, 7, [['n', 0, 0, 2, 2], ['n', 4, 0, 2, 2], ['n', 1, 1, 4, 3], ['n', 0, 4, 6, 3], ['w', 2, 3, 2, 1], ['k', 2, 2, 1, 1], ['k', 3, 2, 1, 1], ['r', 2, 4, 2, 1]]],
+    cushion: ['하트 쿠션', 'floor', 7, 6, [['r', 1, 0, 2, 1], ['r', 4, 0, 2, 1], ['r', 0, 1, 7, 2], ['r', 1, 3, 5, 1], ['r', 2, 4, 3, 1], ['r', 3, 5, 1, 1], ['p', 1, 1, 1, 1]]],
     window: ['창문', 'wall', 20, 22, [['N', 0, 0, 20, 22], ['c', 2, 2, 7, 8], ['c', 11, 2, 7, 8], ['c', 2, 12, 7, 8], ['c', 11, 12, 7, 8], ['w', 3, 4, 4, 2], ['w', 12, 14, 4, 2]]],
     poster: ['포스터', 'wall', 12, 16, [['w', 0, 0, 12, 16], ['c', 1, 1, 10, 9], ['G', 1, 7, 10, 3], ['g', 1, 9, 10, 1], ['y', 7, 2, 2, 2], ['r', 3, 12, 6, 2]]],
-    clock: ['시계', 'wall', 10, 10, [['w', 1, 0, 8, 10], ['w', 0, 1, 10, 8], ['k', 5, 2, 1, 4], ['k', 5, 5, 3, 1]]],
-    frame: ['사진 액자', 'wall', 14, 12, [['n', 0, 0, 14, 12], ['w', 2, 2, 10, 8], ['p', 4, 4, 2, 2], ['p', 8, 4, 2, 2], ['p', 4, 5, 6, 2], ['p', 5, 7, 4, 1], ['p', 6, 8, 2, 1]]]
+    clock: ['시계', 'wall', 6, 6, [['w', 1, 0, 4, 6], ['w', 0, 1, 6, 4], ['k', 3, 1, 1, 2], ['k', 3, 3, 2, 1]]],
+    frame: ['사진 액자', 'wall', 9, 8, [['n', 0, 0, 9, 8], ['w', 1, 1, 7, 6], ['p', 2, 2, 2, 1], ['p', 5, 2, 2, 1], ['p', 2, 3, 5, 1], ['p', 3, 4, 3, 1], ['p', 4, 5, 1, 1]]]
   };
   DEFS.me = ['나', 'floor', 44, 48, []];   // 내 캐릭터(그림은 주인의 아바타). 방에 한 명만
+  // 큰 가구는 실제 비율에 맞춰 줄이고(1칸≈6cm), 소품은 크기·회전을 사용자가 조절
+  const K = { bed: 1.1, desk: .9, sofa: 1, table: .75, shelf: .9, tv: .9, lamp: 1, plant: .8, rug: 1, window: .9, poster: .85 };
+  const ROT = ['rug', 'cushion', 'teddy', 'cat', 'frame', 'poster', 'clock'];
+  const STEPS = [50, 70, 85, 100, 125, 150, 200];
   const TYPES = Object.keys(DEFS).filter(t => t !== 'me');
   const WALLS = ['#f2d7c9', '#cfe3d4', '#cfdcf0', '#f4e7b5', '#d9cdea'];
   const FLOORS = ['#c58f5c', '#a9b5a0', '#d9c7a3', '#8a7a9a'];
 
   const BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
   const cache = {};
-  function sprite(t) {   // 사각형 → 캔버스(바깥 1칸 먹색 윤곽선 자동) → data URL
-    if (cache[t]) return cache[t];
-    const d = DEFS[t], w = d[2] + 2, h = d[3] + 2;
+  const kOf = (t, sc) => (K[t] || 1) * (sc || 100) / 100;
+  const dims = (t, sc) => { const d = DEFS[t], k = kOf(t, sc); return [Math.max(2, Math.round(d[2] * k)), Math.max(2, Math.round(d[3] * k))]; };
+  const size = (t, sc) => { const d = dims(t, sc); return [d[0] + 2, d[1] + 2]; };
+  function sprite(t, sc) {   // 사각형을 배율에 맞게 다시 그리고(항상 또렷함) 바깥 1칸 먹색 윤곽선을 붙여 data URL로
+    const key = t + '@' + (sc || 100); if (cache[key]) return cache[key];
+    const d = DEFS[t], k = kOf(t, sc), dm = dims(t, sc), w = dm[0] + 2, h = dm[1] + 2;
     const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
     const x = cv.getContext('2d');
-    d[4].forEach(r => { x.fillStyle = C[r[0]]; x.fillRect(r[1] + 1, r[2] + 1, r[3], r[4]); });
+    d[4].forEach(r => {
+      const x0 = Math.round(r[1] * k), x1 = Math.max(x0 + 1, Math.round((r[1] + r[3]) * k)), y0 = Math.round(r[2] * k), y1 = Math.max(y0 + 1, Math.round((r[2] + r[4]) * k));
+      x.fillStyle = C[r[0]]; x.fillRect(x0 + 1, y0 + 1, x1 - x0, y1 - y0);
+    });
     const src = x.getImageData(0, 0, w, h), out = x.createImageData(w, h), ink = [31, 36, 32];
     const a = (i, j) => i < 0 || j < 0 || i >= w || j >= h ? 0 : src.data[(j * w + i) * 4 + 3];
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
       const o = (j * w + i) * 4;
-      if (a(i, j)) { for (let k = 0; k < 4; k++) out.data[o + k] = src.data[o + k]; }
+      if (a(i, j)) { for (let q = 0; q < 4; q++) out.data[o + q] = src.data[o + q]; }
       else if (a(i - 1, j) || a(i + 1, j) || a(i, j - 1) || a(i, j + 1)) { out.data[o] = ink[0]; out.data[o + 1] = ink[1]; out.data[o + 2] = ink[2]; out.data[o + 3] = 255; }
     }
     x.putImageData(out, 0, 0);
-    return cache[t] = cv.toDataURL();
+    return cache[key] = cv.toDataURL();
   }
-  const size = t => [DEFS[t][2] + 2, DEFS[t][3] + 2];
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
   // 서버/저장소에서 온 값은 믿지 않고 항상 걸러서 쓴다
@@ -57,8 +66,10 @@
     (Array.isArray(r.items) ? r.items : []).slice(0, MAX_ITEMS).forEach(it => {
       if (!it || !DEFS[it.t] || typeof it.x !== 'number' || typeof it.y !== 'number') return;
       if (it.t === 'me' && o.items.some(i => i.t === 'me')) return;
-      const s = size(it.t);
-      o.items.push({ t: it.t, x: clamp(Math.round(it.x), 0, RW - s[0]), y: clamp(Math.round(it.y), 0, RH - s[1]), f: it.f ? 1 : 0 });
+      const sc = STEPS.includes(it.s) ? it.s : 100, rot = ROT.includes(it.t) && Number.isFinite(it.r) ? ((Math.round(it.r / 15) * 15) % 360 + 360) % 360 : 0, s = size(it.t, sc);
+      const row = { t: it.t, x: clamp(Math.round(it.x), 0, RW - s[0]), y: clamp(Math.round(it.y), 0, RH - s[1]), f: it.f ? 1 : 0 };
+      if (sc !== 100) row.s = sc; if (rot) row.r = rot;
+      o.items.push(row);
     });
     return o;
   }
@@ -82,18 +93,18 @@
     const fit = () => stage.style.setProperty('--u', (u() || 4) + 'px');
     if (window.ResizeObserver) { if (stage._ro) stage._ro.disconnect(); stage._ro = new ResizeObserver(fit); stage._ro.observe(stage); } fit();
 
-    const sort = it => it.y + size(it.t)[1] + (DEFS[it.t][1] === 'wall' ? -200 : 0) + (it.t === 'rug' ? -100 : 0);
+    const sort = it => it.y + size(it.t, it.s)[1] + (DEFS[it.t][1] === 'wall' ? -200 : 0) + (it.t === 'rug' ? -100 : 0);
     function place(img, it) {
-      const s = size(it.t);
+      const s = size(it.t, it.s);
       img.style.left = 'calc(var(--u)*' + it.x + ')'; img.style.top = 'calc(var(--u)*' + it.y + ')';
       img.style.width = 'calc(var(--u)*' + s[0] + ')'; img.style.height = 'calc(var(--u)*' + s[1] + ')';
-      img.style.transform = it.f ? 'scaleX(-1)' : ''; img.style.zIndex = String(300 + sort(it));
+      img.style.transform = (it.r ? 'rotate(' + it.r + 'deg) ' : '') + (it.f ? 'scaleX(-1)' : ''); img.style.zIndex = String(300 + sort(it));
     }
     function draw() {
       wallEl.style.background = WALLS[room.wall]; floorEl.style.background = FLOORS[room.floor];
       layer.innerHTML = '';
       room.items.forEach((it, i) => {
-        const img = document.createElement('img'); img.src = it.t === 'me' ? (opts.avatarUrl || BLANK) : sprite(it.t); img.alt = DEFS[it.t][0]; img.className = 'ritem' + (it.t === 'me' ? ' rme' : '') + (i === sel ? ' sel' : ''); img.draggable = false;
+        const img = document.createElement('img'); img.src = it.t === 'me' ? (opts.avatarUrl || BLANK) : sprite(it.t, it.s); img.alt = DEFS[it.t][0]; img.className = 'ritem' + (it.t === 'me' ? ' rme' : '') + (i === sel ? ' sel' : ''); img.draggable = false;
         place(img, it);
         if (opts.editable) {
           img.addEventListener('pointerdown', e => down(e, i, img));
@@ -106,13 +117,13 @@
       if (opts.onSelect) opts.onSelect(sel >= 0 ? room.items[sel] : null);
     }
     function key(e, i, img) {   // 방향키 1칸(Shift는 5칸), Delete 치우기
-      const it = room.items[i], s = size(it.t), wall = DEFS[it.t][1] === 'wall', k = e.shiftKey ? 5 : 1, d = { ArrowLeft: [-k, 0], ArrowRight: [k, 0], ArrowUp: [0, -k], ArrowDown: [0, k] }[e.key];
+      const it = room.items[i], s = size(it.t, it.s), wall = DEFS[it.t][1] === 'wall', k = e.shiftKey ? 5 : 1, d = { ArrowLeft: [-k, 0], ArrowRight: [k, 0], ArrowUp: [0, -k], ArrowDown: [0, k] }[e.key];
       if (d) { e.preventDefault(); it.x = clamp(it.x + d[0], 0, RW - s[0]); it.y = clamp(it.y + d[1], it.t === 'me' ? FLOOR + 4 - s[1] : 0, wall ? FLOOR + 2 - s[1] : RH - s[1]); place(img, it); clearTimeout(img._kt); img._kt = setTimeout(changed, 300); }
       else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); e.stopPropagation(); sel = i; room.items.splice(i, 1); sel = -1; draw(); changed(); }
     }
     function down(e, i, img) {
       e.preventDefault(); e.stopPropagation();
-      sel = i; const it = room.items[i], sx = e.clientX, sy = e.clientY, ox = it.x, oy = it.y, s = size(it.t), wall = DEFS[it.t][1] === 'wall';
+      sel = i; const it = room.items[i], sx = e.clientX, sy = e.clientY, ox = it.x, oy = it.y, s = size(it.t, it.s), wall = DEFS[it.t][1] === 'wall';
       layer.querySelectorAll('.ritem').forEach((m, k) => m.classList.toggle('sel', k === i)); if (opts.onSelect) opts.onSelect(it);
       try { img.setPointerCapture(e.pointerId); } catch (x) { }
       let moved = false;
@@ -146,6 +157,12 @@
         room.items.push({ t: 'me', x: 84, y: 46, f: 0 }); sel = room.items.length - 1; draw(); changed(); return true;
       },
       hasMe: () => room.items.some(x => x.t === 'me'),
+      rotate() { if (sel < 0 || !ROT.includes(room.items[sel].t)) return; const it = room.items[sel]; it.r = ((it.r || 0) + 15) % 360; if (!it.r) delete it.r; draw(); changed(); },
+      resize(dir) {
+        if (sel < 0) return; const it = room.items[sel], i = STEPS.indexOf(it.s || 100), n = clamp(i + dir, 0, STEPS.length - 1);
+        if (n === i) return; it.s = STEPS[n]; if (it.s === 100) delete it.s;
+        const sz = size(it.t, it.s); it.x = clamp(it.x, 0, RW - sz[0]); it.y = clamp(it.y, 0, RH - sz[1]); draw(); changed();
+      },
       flip() { if (sel < 0) return; room.items[sel].f = room.items[sel].f ? 0 : 1; draw(); changed(); },
       remove() { if (sel < 0) return; room.items.splice(sel, 1); sel = -1; draw(); changed(); },
       deselect() { sel = -1; draw(); },
@@ -155,5 +172,5 @@
     };
   }
 
-  window.SSRoom = { RW, RH, FLOOR, MAX_ITEMS, DEFS, TYPES, sprite, size, sanitize, demoRoom, emptyRoom, mount };
+  window.SSRoom = { ROT, RW, RH, FLOOR, MAX_ITEMS, DEFS, TYPES, sprite, size, sanitize, demoRoom, emptyRoom, mount };
 })();
