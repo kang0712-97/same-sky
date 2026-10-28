@@ -321,3 +321,11 @@ label.btn{display:flex;align-items:center;justify-content:center}
 @media (prefers-reduced-motion:reduce){.voicebtn{animation:none!important}}
 .twin .news.pop{animation:pop .3s steps(3),newsflash 1s steps(2) 3}
 @keyframes newsflash{50%{background:#ffd0d6}}
+
+/* 목소리 쪽지: 같은 쪽지 그림을 하늘색으로 물들이고 모서리에 스피커 표시 */
+.notebtn.voice{position:absolute}
+.notebtn.voice .note{filter:hue-rotate(155deg) saturate(1.15)}
+.notebtn.voice:hover .note{filter:invert(1)}
+.vbadge{position:absolute;right:-14%;bottom:-14%;width:48%;aspect-ratio:1;border:2px solid var(--ink);border-radius:50%;background:#c8463c;display:flex;align-items:center;justify-content:center;line-height:0}
+.vbadge i{display:block;width:34%;height:34%;background:#fff;clip-path:polygon(0 30%,35% 30%,70% 0,70% 100%,35% 70%,0 70%);margin-right:12%}
+.vbadge b{position:absolute;right:14%;top:32%;width:12%;height:36%;border:2px solid #fff;border-left:0;border-radius:0 80% 80% 0}

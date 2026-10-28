@@ -357,9 +357,10 @@
     const list = roomNotes();
     list.forEach(n => {
       if (n.kind === 'voice') {   // 생김새는 글 쪽지와 같고, 열면 '재생하기' 버튼이 나온다
-        const b = document.createElement('button'); b.type = 'button'; b.className = 'notebtn'; b.style.left = clampPct(n.x) + '%'; b.style.top = clampPct(n.y) + '%';
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'notebtn voice'; b.style.left = clampPct(n.x) + '%'; b.style.top = clampPct(n.y) + '%';
         b.setAttribute('aria-label', '목소리 쪽지 열기 · ' + nameOf(n.slot));
         const i = document.createElement('img'); i.src = A.note; i.className = 'note'; i.alt = ''; b.appendChild(i);
+        const vb = document.createElement('span'); vb.className = 'vbadge'; vb.appendChild(document.createElement('i')); vb.appendChild(document.createElement('b')); b.appendChild(vb);   // 쪽지 모서리에 붙는 작은 스피커
         b.onclick = e => {
           e.stopPropagation(); clearTimeout(bub._t); bub.textContent = ''; bub.classList.remove('on'); void bub.offsetWidth; bub.classList.add('on');
           const t = document.createElement('span'); t.textContent = nameOf(n.slot) + '님의 목소리 쪽지 · ' + Math.max(1, Math.round(Number(n.dur) || 0)) + '초 '; bub.appendChild(t);
