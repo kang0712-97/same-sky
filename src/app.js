@@ -360,16 +360,16 @@
         const b = document.createElement('button'); b.type = 'button'; b.className = 'notebtn voice'; b.style.left = clampPct(n.x) + '%'; b.style.top = clampPct(n.y) + '%';
         b.setAttribute('aria-label', '목소리 쪽지 열기 · ' + nameOf(n.slot));
         const i = document.createElement('img'); i.src = A.note; i.className = 'note'; i.alt = ''; b.appendChild(i);
-        const vb = document.createElement('span'); vb.className = 'vbadge'; vb.appendChild(document.createElement('i')); vb.appendChild(document.createElement('b')); b.appendChild(vb);   // 쪽지 모서리에 붙는 작은 스피커
         b.onclick = e => {
           e.stopPropagation(); clearTimeout(bub._t); bub.textContent = ''; bub.classList.remove('on'); void bub.offsetWidth; bub.classList.add('on');
+          const sp = document.createElement('img'); sp.src = 'assets/ui/speaker.png'; sp.alt = ''; sp.className = 'spk'; bub.appendChild(sp);
           const t = document.createElement('span'); t.textContent = nameOf(n.slot) + '님의 목소리 쪽지 · ' + Math.max(1, Math.round(Number(n.dur) || 0)) + '초 '; bub.appendChild(t);
           const pb = document.createElement('button'); pb.type = 'button'; pb.className = 'btn small'; pb.textContent = '▶ 재생하기'; bub.appendChild(pb);
           bub._t = setTimeout(() => bub.classList.remove('on'), 15000);
           pb.onclick = async ev => {
-            ev.stopPropagation(); if (playing) { playing.pause(); playing = null; pb.textContent = '▶ 재생하기'; return; }
-            let fin = false, tm = 0; pb.textContent = '■ 멈춤'; clearTimeout(bub._t);
-            const finish = ok => { if (fin) return; fin = true; clearTimeout(tm); pb.textContent = '▶ 재생하기'; if (ok && roomTab === 'me') { readNow(n.id); b.remove(); bub.classList.remove('on'); } else bub._t = setTimeout(() => bub.classList.remove('on'), 8000); };   // 잘 들렸을 때만 방에서 사라짐(실패하면 다시 누를 수 있음)
+            ev.stopPropagation(); if (playing) { playing.pause(); playing = null; pb.textContent = '▶ 재생하기'; sp.classList.remove('on'); return; }
+            let fin = false, tm = 0; pb.textContent = '■ 멈춤'; clearTimeout(bub._t); sp.classList.add('on');
+            const finish = ok => { if (fin) return; fin = true; clearTimeout(tm); sp.classList.remove('on'); pb.textContent = '▶ 재생하기'; if (ok && roomTab === 'me') { readNow(n.id); b.remove(); bub.classList.remove('on'); } else bub._t = setTimeout(() => bub.classList.remove('on'), 8000); };   // 잘 들렸을 때만 방에서 사라짐(실패하면 다시 누를 수 있음)
             tm = setTimeout(() => finish(!!playing), (Number(n.dur) || 3) * 1000 + 1500);
             await playVoice(n.id, null, finish);
           };
