@@ -20,6 +20,7 @@
     if (manifest) return chars;
     manifest = await (await fetch(BASE + 'manifest.json')).json();
     chars = manifest.characters; headItems = manifest.headItems; patterns = manifest.patterns;
+    if (window.SSMix) await SSMix.load().catch(() => {});
     await Promise.all(chars.map(c => c.builder ? null : new Promise(res => { const im = new Image(); im.onload = () => { imgs[c.id] = im; res(); }; im.onerror = res; im.src = BASE + c.file; })));
     return chars;
   }
@@ -34,6 +35,7 @@
 
   // avatar: { char, hair, top, bottom, hairStyle, head, glasses, scarf, accent, tpat, bpat }
   function render(av) {
+    if (av.mix && window.SSMix && SSMix.ready()) return SSMix.render(av);   // 파츠 조합 캐릭터
     const ch = byId(av.char), im = ch.builder ? window.SSBuilder.build(av) : imgs[ch.id], an = ch.anchors || {};
     if (ch.v2) { const c0 = document.createElement('canvas'); c0.width = im.width; c0.height = im.height; c0.getContext('2d').drawImage(im, 0, 0); return c0; }   // 새 캐릭터는 완성된 그림 그대로
     const W = im.width, Hh = im.height;
@@ -199,6 +201,10 @@
     if (avatar.custom) return avatar.thumb;
     const k = JSON.stringify(avatar); if (hcache[k]) return hcache[k];
     const ch = byId(avatar.char); let bb;
+    if (avatar.mix) {   // 파츠 조합: 머리 중심 정사각형
+      const c = render(avatar), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, b = bbox(d, c.width, c.height), cx = Math.round((b.x0 + b.x1) / 2), o = document.createElement('canvas'); o.width = o.height = 48;
+      const ox = o.getContext('2d'); ox.imageSmoothingEnabled = false; ox.drawImage(c, cx - 28, b.y0 - 2, 56, 56, 0, 0, 48, 48); return hcache[k] = o.toDataURL();
+    }
     if (ch.v2) {   // 머리 중심으로 정사각 잘라내기
       const c = render(avatar), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, b = bbox(d, c.width, c.height), sw = b.x1 - b.x0 + 1, o = document.createElement('canvas'); o.width = o.height = 48;
       const ox = o.getContext('2d'); ox.imageSmoothingEnabled = false; ox.drawImage(c, b.x0 - 2, b.y0 - 2, sw + 4, sw + 4, 0, 0, 48, 48); return hcache[k] = o.toDataURL();

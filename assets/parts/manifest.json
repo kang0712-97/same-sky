@@ -1,0 +1,405 @@
+{
+ "w": 220,
+ "h": 240,
+ "skin": "#fcceaf",
+ "order": [
+  "body",
+  "shoes",
+  "bottom",
+  "top",
+  "one",
+  "hair",
+  "eyes"
+ ],
+ "kinds": {
+  "top": [
+   {
+    "id": "top-T1_0",
+    "file": "f/top-T1_0.png"
+   },
+   {
+    "id": "top-T1_1",
+    "file": "f/top-T1_1.png"
+   },
+   {
+    "id": "top-T1_2",
+    "file": "f/top-T1_2.png"
+   },
+   {
+    "id": "top-T2_0",
+    "file": "f/top-T2_0.png"
+   },
+   {
+    "id": "top-T2_1",
+    "file": "f/top-T2_1.png"
+   },
+   {
+    "id": "top-T2_2",
+    "file": "f/top-T2_2.png"
+   },
+   {
+    "id": "top-T3_0",
+    "file": "f/top-T3_0.png"
+   },
+   {
+    "id": "top-T3_1",
+    "file": "f/top-T3_1.png"
+   },
+   {
+    "id": "top-T3_2",
+    "file": "f/top-T3_2.png"
+   },
+   {
+    "id": "top-T4_0",
+    "file": "f/top-T4_0.png"
+   },
+   {
+    "id": "top-T4_1",
+    "file": "f/top-T4_1.png"
+   },
+   {
+    "id": "top-T4_2",
+    "file": "f/top-T4_2.png"
+   },
+   {
+    "id": "top-T5_0",
+    "file": "f/top-T5_0.png"
+   },
+   {
+    "id": "top-T5_1",
+    "file": "f/top-T5_1.png"
+   },
+   {
+    "id": "top-T5_2",
+    "file": "f/top-T5_2.png"
+   },
+   {
+    "id": "top-T6_0",
+    "file": "f/top-T6_0.png"
+   },
+   {
+    "id": "top-T6_1",
+    "file": "f/top-T6_1.png"
+   },
+   {
+    "id": "top-T6_2",
+    "file": "f/top-T6_2.png"
+   }
+  ],
+  "bottom": [
+   {
+    "id": "bottom-B1_0",
+    "file": "f/bottom-B1_0.png"
+   },
+   {
+    "id": "bottom-B1_1",
+    "file": "f/bottom-B1_1.png"
+   },
+   {
+    "id": "bottom-B1_2",
+    "file": "f/bottom-B1_2.png"
+   },
+   {
+    "id": "bottom-B2_0",
+    "file": "f/bottom-B2_0.png"
+   },
+   {
+    "id": "bottom-B2_1",
+    "file": "f/bottom-B2_1.png"
+   },
+   {
+    "id": "bottom-B2_2",
+    "file": "f/bottom-B2_2.png"
+   },
+   {
+    "id": "bottom-B3_0",
+    "file": "f/bottom-B3_0.png"
+   },
+   {
+    "id": "bottom-B3_1",
+    "file": "f/bottom-B3_1.png"
+   },
+   {
+    "id": "bottom-B3_2",
+    "file": "f/bottom-B3_2.png"
+   },
+   {
+    "id": "bottom-B4_0",
+    "file": "f/bottom-B4_0.png"
+   },
+   {
+    "id": "bottom-B4_1",
+    "file": "f/bottom-B4_1.png"
+   },
+   {
+    "id": "bottom-B4_2",
+    "file": "f/bottom-B4_2.png"
+   }
+  ],
+  "shoes": [
+   {
+    "id": "shoes-SH1_0",
+    "file": "f/shoes-SH1_0.png"
+   },
+   {
+    "id": "shoes-SH1_1",
+    "file": "f/shoes-SH1_1.png"
+   },
+   {
+    "id": "shoes-SH1_2",
+    "file": "f/shoes-SH1_2.png"
+   },
+   {
+    "id": "shoes-SH2_0",
+    "file": "f/shoes-SH2_0.png"
+   },
+   {
+    "id": "shoes-SH2_1",
+    "file": "f/shoes-SH2_1.png"
+   },
+   {
+    "id": "shoes-SH2_2",
+    "file": "f/shoes-SH2_2.png"
+   },
+   {
+    "id": "shoes-SH3_0",
+    "file": "f/shoes-SH3_0.png"
+   },
+   {
+    "id": "shoes-SH3_1",
+    "file": "f/shoes-SH3_1.png"
+   },
+   {
+    "id": "shoes-SH3_2",
+    "file": "f/shoes-SH3_2.png"
+   }
+  ],
+  "one": [
+   {
+    "id": "one-O1_0",
+    "file": "f/one-O1_0.png"
+   },
+   {
+    "id": "one-O1_1",
+    "file": "f/one-O1_1.png"
+   },
+   {
+    "id": "one-O1_2",
+    "file": "f/one-O1_2.png"
+   },
+   {
+    "id": "one-O2_0",
+    "file": "f/one-O2_0.png"
+   },
+   {
+    "id": "one-O2_1",
+    "file": "f/one-O2_1.png"
+   },
+   {
+    "id": "one-O2_2",
+    "file": "f/one-O2_2.png"
+   },
+   {
+    "id": "one-O3_0",
+    "file": "f/one-O3_0.png"
+   },
+   {
+    "id": "one-O3_1",
+    "file": "f/one-O3_1.png"
+   },
+   {
+    "id": "one-O3_2",
+    "file": "f/one-O3_2.png"
+   }
+  ],
+  "hair": [
+   {
+    "id": "hair-HF1_0",
+    "file": "f/hair-HF1_0.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF1_1",
+    "file": "f/hair-HF1_1.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF1_2",
+    "file": "f/hair-HF1_2.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF1_3",
+    "file": "f/hair-HF1_3.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF1_4",
+    "file": "f/hair-HF1_4.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF1_5",
+    "file": "f/hair-HF1_5.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF1_6",
+    "file": "f/hair-HF1_6.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF1_7",
+    "file": "f/hair-HF1_7.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF2_0",
+    "file": "f/hair-HF2_0.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF2_1",
+    "file": "f/hair-HF2_1.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF2_2",
+    "file": "f/hair-HF2_2.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF2_3",
+    "file": "f/hair-HF2_3.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF2_4",
+    "file": "f/hair-HF2_4.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF2_5",
+    "file": "f/hair-HF2_5.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF2_6",
+    "file": "f/hair-HF2_6.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF2_7",
+    "file": "f/hair-HF2_7.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF3_0",
+    "file": "f/hair-HF3_0.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF3_1",
+    "file": "f/hair-HF3_1.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF3_2",
+    "file": "f/hair-HF3_2.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF3_3",
+    "file": "f/hair-HF3_3.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF3_4",
+    "file": "f/hair-HF3_4.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF3_5",
+    "file": "f/hair-HF3_5.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF3_6",
+    "file": "f/hair-HF3_6.png",
+    "recolor": "hair"
+   },
+   {
+    "id": "hair-HF3_7",
+    "file": "f/hair-HF3_7.png",
+    "recolor": "hair"
+   }
+  ],
+  "eyes": [
+   {
+    "id": "eyes-E1_0",
+    "file": "f/eyes-E1_0.png"
+   },
+   {
+    "id": "eyes-E1_1",
+    "file": "f/eyes-E1_1.png"
+   },
+   {
+    "id": "eyes-E1_2",
+    "file": "f/eyes-E1_2.png"
+   },
+   {
+    "id": "eyes-E1_3",
+    "file": "f/eyes-E1_3.png"
+   },
+   {
+    "id": "eyes-E1_4",
+    "file": "f/eyes-E1_4.png"
+   },
+   {
+    "id": "eyes-E1_5",
+    "file": "f/eyes-E1_5.png"
+   },
+   {
+    "id": "eyes-E1_6",
+    "file": "f/eyes-E1_6.png"
+   },
+   {
+    "id": "eyes-E1_7",
+    "file": "f/eyes-E1_7.png"
+   },
+   {
+    "id": "eyes-E2_0",
+    "file": "f/eyes-E2_0.png"
+   },
+   {
+    "id": "eyes-E2_1",
+    "file": "f/eyes-E2_1.png"
+   },
+   {
+    "id": "eyes-E2_2",
+    "file": "f/eyes-E2_2.png"
+   },
+   {
+    "id": "eyes-E2_3",
+    "file": "f/eyes-E2_3.png"
+   },
+   {
+    "id": "eyes-E2_4",
+    "file": "f/eyes-E2_4.png"
+   },
+   {
+    "id": "eyes-E2_5",
+    "file": "f/eyes-E2_5.png"
+   },
+   {
+    "id": "eyes-E2_6",
+    "file": "f/eyes-E2_6.png"
+   },
+   {
+    "id": "eyes-E2_7",
+    "file": "f/eyes-E2_7.png"
+   }
+  ]
+ },
+ "body": "f/body.png"
+}

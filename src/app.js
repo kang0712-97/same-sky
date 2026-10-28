@@ -375,18 +375,26 @@
   /* ---------- 등록 화면 ---------- */
   let avTab = 'char';
   const AVTABS = [['char', '캐릭터'], ['hair', '머리'], ['face', '얼굴'], ['cloth', '옷'], ['item', '소품']];
+  const MIXTABS = [['char', '추천'], ['face', '얼굴'], ['hair', '머리'], ['cloth', '옷']];
   function renderSetupAvatar() {
     const a = draft.avatar, tabs = $('avTabs'), panel = $('avPanel'); tabs.innerHTML = ''; panel.innerHTML = '';
     $('avPrev').src = Av.thumbUrl(a);
-    const simple = a.custom || Av.byId(a.char).v2;   // 완성형 캐릭터(새 24종)·내 사진 캐릭터는 고르기만
+    const mix = !!a.mix && SSMix.ready();   // 파츠로 직접 꾸미는 캐릭터
+    const simple = !mix && (a.custom || Av.byId(a.char).v2);   // 완성형 캐릭터(새 24종)·내 사진 캐릭터는 고르기만
     if (simple) avTab = 'char';
+    if (mix && !MIXTABS.some(t => t[0] === avTab)) avTab = 'face';
     tabs.hidden = !!simple;
-    AVTABS.forEach(([id, label]) => {
+    (mix ? MIXTABS : AVTABS).forEach(([id, label]) => {
       if (simple && id !== 'char') return;
       const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.className = 'tab' + (avTab === id ? ' on' : ''); b.textContent = label;
       b.setAttribute('aria-selected', avTab === id); b.onclick = () => { avTab = id; renderSetupAvatar(); }; tabs.appendChild(b);
     });
     const ch = a.custom ? null : Av.byId(a.char);
+    const part = (t, kind, none, thumb) => {   // 파츠 고르기 격자 (번호만 붙은 썸네일)
+      title(t); const g = grid();
+      if (none) cell(g, '없음', null, !a.mix[kind], () => { a.mix[kind] = null; });
+      SSMix.kinds(kind).forEach((e, i) => cell(g, String(i + 1), thumb({ ...a, mix: { ...a.mix, [kind]: e.id } }), a.mix[kind] === e.id, () => { a.mix[kind] = e.id; if (kind === 'top' || kind === 'bottom') a.mix.one = null; }));
+    };
     const title = t => { const d = document.createElement('div'); d.className = 'cl'; d.textContent = t; panel.appendChild(d); };
     const grid = () => { const g = document.createElement('div'); g.className = 'ogrid'; panel.appendChild(g); return g; };
     const cell = (g, label, src, on, fn) => {   // 썸네일 칸
@@ -403,8 +411,19 @@
     };
     const accRow = () => { if ((a.head && a.head !== 'none') || a.scarf || (a.neck && a.neck !== 'none')) { const al = Av.SWATCH.accent, row = document.createElement('div'); row.className = 'crow'; row.innerHTML = '<span class="cl">소품색</span>'; al.forEach(c => { const s = document.createElement('button'); s.type = 'button'; s.className = 'sw2' + ((a.accent || al[0]) === c ? ' on' : ''); s.style.background = c; s.setAttribute('aria-label', c); s.onclick = () => { a.accent = c; renderSetupAvatar(); }; row.appendChild(s); }); panel.appendChild(row); } };
     const V = (o) => Av.headUrl({ ...a, ...o });
-    if (avTab === 'char') {
-      [['f', '여자'], ['m', '남자']].forEach(([grp, label]) => { title(label); const g = grid(); Av.list().filter(c => c.group === grp).forEach(c => cell(g, c.name, Av.thumbUrl({ char: c.id }), !a.custom && Av.byId(a.char).id === c.id, () => { draft.avatar = { char: c.id, hair: null, top: null, bottom: null }; })); });
+    const T = o => Av.thumbUrl(o);
+    if (mix && avTab === 'face') {
+      title('피부색'); swatches('skin', '', Av.SWATCH.skin);
+      part('눈', 'eyes', false, V);
+    } else if (mix && avTab === 'hair') {
+      title('머리 색'); swatches('hc', '', Av.SWATCH.hair);
+      part('머리 모양', 'hair', false, V);
+    } else if (mix && avTab === 'cloth') {
+      part('상의', 'top', false, T); part('하의', 'bottom', false, T); part('원피스', 'one', true, T); part('신발', 'shoes', true, T);
+    } else if (avTab === 'char') {
+      if (!mix && SSMix.ready()) { const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'btn'; bt.textContent = '직접 꾸미기 (여자 몸)'; bt.onclick = () => { draft.avatar = SSMix.defaultMix(); avTab = 'face'; renderSetupAvatar(); }; panel.appendChild(bt); const h = document.createElement('div'); h.className = 'hint'; h.textContent = '눈 · 머리 · 옷 · 신발을 하나씩 골라 만들어요. 남자 몸은 준비 중이에요.'; panel.appendChild(h); }
+      if (mix) { const h = document.createElement('div'); h.className = 'hint'; h.textContent = '아래에서 고르면 완성된 캐릭터로 바뀌고, 지금 꾸민 모습은 사라져요.'; panel.appendChild(h); }
+      [['f', '여자'], ['m', '남자']].forEach(([grp, label]) => { title(label); const g = grid(); Av.list().filter(c => c.group === grp).forEach(c => cell(g, c.name, Av.thumbUrl({ char: c.id }), !a.custom && !a.mix && Av.byId(a.char).id === c.id, () => { draft.avatar = { char: c.id, hair: null, top: null, bottom: null }; })); });
       if (a.custom) { const h = document.createElement('div'); h.className = 'hint'; h.textContent = '지금은 내가 만든 캐릭터예요. 위에서 고르면 꾸미기가 켜져요.'; panel.appendChild(h); }
     } else if (avTab === 'hair') {
       if (ch.hairStyles && ch.hairStyles.length > 1) { title('머리 모양'); const g = grid(); ch.hairStyles.forEach(s => cell(g, s.name, V({ hairStyle: s.id }), (a.hairStyle || ch.hairStyles[0].id) === s.id, () => { a.hairStyle = s.id; })); }

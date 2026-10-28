@@ -93,6 +93,13 @@ pkill -f "http.server 8123"
 ## 5.8 아바타 v2 (2026-10-28)
 GPT가 만든 한국 일상 스타일 캐릭터 24종(g01~g12, b01~b12; 원본 887×1774 투명 PNG는 `assets/incoming/characters/`, git 제외)을 `scripts/convert-characters.py`로 220×240 스프라이트(키 134px, 발 y=216, 색 28개 이내, 모두 같은 배율)로 변환 → `assets/characters/v2/`. manifest는 24종뿐(`v2:true`, `group` f/m, 9~12번은 `premium:true`=별조각 상점 대상 예정). `avatar.js`: v2는 완성 그림 그대로 반환(`render`), 예전 저장값 girl/boy/make는 g01/b01로 연결(`LEGACY`). 꾸미기 화면은 '캐릭터 고르기'만(탭 숨김). **예전 코드 꾸미기(머리띠·안경·목도리·직접 만들기 builder)는 해상도가 달라 v2에선 안 쓰임** — GPT 파츠 시트(`assets/incoming/PARTS_LIST.md`)로 레이어 방식 새로 만들 예정(마네킹 색 기준 분리·정렬). 머리색 바꾸기도 v2에선 아직 없음(파츠 단계에서).
 
+## 5.9 파츠 조합 캐릭터 최소 버전 (2026-10-28)
+- `scripts/build-parts.py`: assets/incoming/parts 시트 → assets/parts/f/*.png (220x240 레이어, 자체 외곽선) + assets/parts/manifest.json. 여자 몸 기준. 상의18·하의12·신발9·원피스9·머리24·눈16. 눈은 EYE_DROP으로 앞머리 아래에 내림.
+- `src/mix.js`(SSMix): 몸→신발→하의→상의→원피스→머리→눈 순서로 겹침. 피부(av.skin)·머리(av.hc) 색은 밝기 유지 색조 변환. avatar JSON은 `{char:'g01', mix:{hair,eyes,top,bottom,shoes,one}, skin, hc}`.
+- 꾸미기 화면: 캐릭터 탭의 '직접 꾸미기'로 진입, 탭 추천/얼굴/머리/옷. 24종 완성 캐릭터는 '추천'으로 유지.
+- 한계/남은 일: 남자 몸·남자 머리 없음, 눈썹·입·소품·별조각 파츠 미적용, 외곽선·앞머리가 눈을 가리는 문제, 파츠 이름 없이 번호만 표시. 새 시트가 오면 build-parts.py의 SHEETS에 추가.
+- 주의: assets/incoming 은 git에 올리지 않는다(add 할 때 경로를 지정).
+
 ## 6. 남은 일 (3단계 후보, 우선순위 순 제안)
 감수에서 나온 것 중 미착수. **사용자에게 어느 것부터 할지 먼저 묻는다.**
 1. ✅(완료) **초대 링크**(`?code=`): 링크로 열면 코드 자동 입력. 코드 복사/전달 번거로움 해소. (UX·사용자 감수 공통)
