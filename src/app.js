@@ -42,6 +42,7 @@
     async listNotes() { return JSON.parse(JSON.stringify(L.notes)); },
     async addVoice(code, slot, v) { (L.voices || (L.voices = [])).unshift({ id: 'l' + Date.now(), slot, mime: v.mime, dur: v.dur, data: v.data, x: v.x, y: v.y, read_at: null, created_at: new Date().toISOString() }); saveL(); },
     async listVoices() { return (L.voices || []).map(({ data, ...m }) => m); },
+    async deleteItem(code, slot, id) { L.notes = L.notes.filter(x => !(x.id === id && x.slot === slot)); L.voices = (L.voices || []).filter(x => !(x.id === id && x.slot === slot)); saveL(); },
     async markRead(code, slot, ids) { const t = new Date().toISOString(); [...L.notes, ...(L.voices || [])].forEach(x => { if (x.slot !== slot && !x.read_at && (!ids || ids.includes(x.id))) x.read_at = t; }); saveL(); },
     async getVoice(code, id) { const v = (L.voices || []).find(x => String(x.id) === String(id)); return v ? { mime: v.mime, data: v.data } : null; },
     async getRooms() { const r = L.rooms || {}; return [{ slot: S.slot, room: r[S.slot] || S.room || null }, { slot: otherSlot(), room: r[otherSlot()] || Room.demoRoom() }].filter(x => x.room); },
@@ -361,10 +362,11 @@
         b.setAttribute('aria-label', '목소리 쪽지 열기 · ' + nameOf(n.slot));
         const i = document.createElement('img'); i.src = A.note; i.className = 'note'; i.alt = ''; b.appendChild(i);
         b.onclick = e => {
-          e.stopPropagation(); clearTimeout(bub._t); bub.textContent = ''; bub.classList.remove('on'); void bub.offsetWidth; bub.classList.add('on');
+          e.stopPropagation(); closeBubble(); clearTimeout(bub._t); bub.textContent = ''; void bub.offsetWidth; bub.classList.add('on');
           const sp = document.createElement('img'); sp.src = 'assets/ui/speaker.png'; sp.alt = ''; sp.className = 'spk'; bub.appendChild(sp);
           const t = document.createElement('span'); t.textContent = nameOf(n.slot) + '님의 목소리 쪽지 · ' + Math.max(1, Math.round(Number(n.dur) || 0)) + '초 '; bub.appendChild(t);
           const pb = document.createElement('button'); pb.type = 'button'; pb.className = 'btn small'; pb.textContent = '▶ 재생하기'; bub.appendChild(pb);
+          if (n.slot === S.slot) { bub.appendChild(document.createTextNode(' ')); bub.appendChild(delBtn(n)); }
           bub._t = setTimeout(() => bub.classList.remove('on'), 15000);
           pb.onclick = async ev => {
             ev.stopPropagation(); if (playing) { playing.pause(); playing = null; pb.textContent = '▶ 재생하기'; sp.classList.remove('on'); return; }
@@ -379,7 +381,11 @@
       const b = document.createElement('button'); b.type = 'button'; b.className = 'notebtn'; b.style.left = clampPct(n.x) + '%'; b.style.top = clampPct(n.y) + '%';
       b.setAttribute('aria-label', '쪽지 읽기 · ' + nameOf(n.slot));
       const i = document.createElement('img'); i.src = A.note; i.className = 'note'; i.alt = ''; b.appendChild(i);
-      b.onclick = e => { e.stopPropagation(); bub.textContent = nameOf(n.slot) + ': ' + n.body; bub.classList.remove('on'); void bub.offsetWidth; bub.classList.add('on'); clearTimeout(bub._t); bub._t = setTimeout(() => bub.classList.remove('on'), 4000); if (roomTab === 'me') { readNow(n.id); b.remove(); } };
+      b.onclick = e => {
+        e.stopPropagation(); closeBubble(); bub.textContent = ''; const t = document.createElement('span'); t.textContent = nameOf(n.slot) + ': ' + n.body + ' '; bub.appendChild(t);
+        if (n.slot === S.slot) bub.appendChild(delBtn(n));   // 내가 보낸 쪽지는 삭제 가능
+        void bub.offsetWidth; bub.classList.add('on'); clearTimeout(bub._t); bub._t = setTimeout(() => bub.classList.remove('on'), 12000); if (roomTab === 'me') { readNow(n.id); b.remove(); }
+      };
       box.appendChild(b);
     });
     $('noteForm').hidden = roomTab !== 'pt' || !D.partner;
@@ -410,10 +416,27 @@
       const nm = document.createElement('div'); nm.className = 'nm2'; nm.textContent = nameOf(n.slot) + ' '; const sp = document.createElement('span'); sp.className = 'muted'; sp.textContent = '· ' + when(n.created_at); nm.appendChild(sp); row.appendChild(nm);
       if (n.kind === 'note') { const t = document.createElement('div'); t.textContent = n.body; row.appendChild(t); }
       else { const t = document.createElement('span'); t.textContent = '목소리 쪽지 · ' + Math.max(1, Math.round(Number(n.dur) || 0)) + '초'; const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = '▶ 재생'; b.onclick = () => playVoice(n.id, b); row.appendChild(t); row.appendChild(b); }
+      if (n.slot === S.slot) { const d = delBtn(n); d.style.marginTop = '6px'; row.appendChild(d); }   // 보낸 쪽지는 보낸 사람이 삭제 가능
       box.appendChild(row);
     });
   }
   /* ---------- 목소리 쪽지 ---------- */
+  function closeBubble() {   // 쪽지 말풍선을 닫고, 듣고 있던 소리는 멈춘다
+    const b = document.querySelector('.rbubble'); if (b) { b.classList.remove('on'); clearTimeout(b._t); }
+    if (playing) { playing.pause(); playing = null; if (playBtn) playBtn.textContent = '▶ 재생'; playBtn = null; }
+  }
+  document.addEventListener('click', e => { const b = document.querySelector('.rbubble.on'); if (b && !b.contains(e.target) && !(e.target.closest && e.target.closest('.notebtn'))) closeBubble(); });
+  function delBtn(n) {   // 한 번 누르면 '정말 삭제?'로 바뀌고, 3초 안에 한 번 더 누르면 삭제
+    const d = document.createElement('button'); d.type = 'button'; d.className = 'btn small'; d.textContent = '삭제'; let armed = false, tm = 0;
+    d.onclick = async ev => {
+      ev.stopPropagation();
+      if (!armed) { armed = true; d.textContent = '정말 삭제?'; tm = setTimeout(() => { armed = false; d.textContent = '삭제'; }, 3000); return; }
+      clearTimeout(tm);
+      try { await api().deleteItem(S.code, S.slot, n.id); D.notes = D.notes.filter(x => x.id !== n.id); D.voices = D.voices.filter(x => x.id !== n.id); closeBubble(); drawRoomNotes(); drawNotesBox(); toast('쪽지를 삭제했어요'); }
+      catch (e) { armed = false; d.textContent = '삭제'; toast(explain(e)); }
+    };
+    return d;
+  }
   function markAllRead() { if (!D.notes.concat(D.voices).some(x => x.slot !== S.slot && !x.read_at)) return; const t = new Date().toISOString(); D.notes.concat(D.voices).forEach(x => { if (x.slot !== S.slot && !x.read_at) x.read_at = t; }); api().markRead(S.code, S.slot, null).catch(() => { }); }   // 쪽지함에서 확인하면 방의 쪽지도 사라짐
   let rec = null, playing = null, playBtn = null;
   function paintRec(txt) { document.querySelectorAll('.recbtn').forEach(b => { b.textContent = txt || (b.closest('#v-notes') ? '● 목소리 쪽지 남기기' : '● 목소리'); b.classList.toggle('rec', !!rec); }); document.querySelectorAll('.recx').forEach(b => { b.hidden = !rec; }); }

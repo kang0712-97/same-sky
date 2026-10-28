@@ -15,6 +15,7 @@ const checks = [
   ['내 방 함수 (ss_save_room / ss_get_rooms)  ← 4차 SQL', async () => { const a = await rpc('ss_get_rooms', { p_code: Z }); const b = await rpc('ss_save_room', { p_code: Z, p_slot: 'a', p_room: {}, p_token: 'x' }); return a.ok && !missing(b.msg); }],
   ['사칭 방지 (토큰 검증 쓰기 함수)  ← 5차 SQL', async () => { const r = await rpc('ss_add_note', { p_code: Z, p_slot: 'a', p_body: 'x', p_x: 1, p_y: 1, p_token: 'x' }); return !missing(r.msg); }],
   ['목소리 쪽지·읽음 표시 (ss_add_voice / ss_mark_read)  ← 6·7차 SQL', async () => { const a = await rpc('ss_list_voices', { p_code: Z }); const b = await rpc('ss_add_voice', { p_code: Z, p_slot: 'a', p_mime: 'audio/webm', p_dur: 1, p_data: 'x', p_x: 1, p_y: 1, p_token: 'x' }); const c = await rpc('ss_mark_read', { p_code: Z, p_slot: 'a', p_token: 'x', p_ids: null }); return a.ok && !missing(b.msg) && !missing(c.msg); }],
+  ['보낸 쪽지 삭제 (ss_delete_item)  ← 8차 SQL', async () => { const r = await rpc('ss_delete_item', { p_code: Z, p_slot: 'a', p_token: 'x', p_id: U }); return !missing(r.msg); }],
   ['옛 우회로 제거 (토큰 없는 ss_add_note 없어야 함)  ← 5차 SQL', async () => { const r = await rpc('ss_add_note', { p_code: Z, p_slot: 'a', p_body: 'x', p_x: 1, p_y: 1 }); return missing(r.msg); }],
 ];
 let allOk = true;

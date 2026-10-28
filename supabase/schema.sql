@@ -268,3 +268,13 @@ language sql security definer set search_path = public as $$
     'voices',  (select count(*)::text || coalesce(max(created_at)::text, '') || coalesce(max(read_at)::text, '') from ss_voices where code = upper(p_code)));
 $$;
 grant execute on function ss_state(text) to anon;
+
+-- ───────── 8차: 내가 보낸 쪽지·목소리 삭제 (보낸 사람만) ─────────
+create or replace function ss_delete_item(p_code text, p_slot text, p_token text, p_id uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  perform ss_auth(p_code, p_slot, p_token);
+  delete from ss_notes  where id = p_id and code = upper(p_code) and slot = p_slot;
+  delete from ss_voices where id = p_id and code = upper(p_code) and slot = p_slot;
+end $$;
+grant execute on function ss_delete_item(text,text,text,uuid) to anon;
