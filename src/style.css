@@ -310,3 +310,14 @@ label.btn{display:flex;align-items:center;justify-content:center}
 .recbtn.rec{background:#c8463c;color:#fff;border-color:var(--ink)}
 .nrow.voice{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .nrow.voice .nm2{flex:1 1 100%}
+
+/* 방에 붙는 목소리 쪽지: 쪽지(노란 종이)와 달리 둥근 스피커 모양 */
+.voicebtn{position:absolute;width:11%;aspect-ratio:1;padding:0;border:3px solid var(--ink);border-radius:50%;background:#c8463c;cursor:pointer;box-shadow:2px 2px 0 var(--ink);animation:wob 2.4s steps(1) infinite;display:flex;align-items:center;justify-content:center;pointer-events:auto}
+.voicebtn i{display:block;width:34%;height:34%;background:#fff;clip-path:polygon(0 30%,35% 30%,70% 0,70% 100%,35% 70%,0 70%)}
+.voicebtn b{position:absolute;right:9%;top:30%;width:14%;height:40%;border:3px solid #fff;border-left:0;border-radius:0 80% 80% 0}
+.voicebtn.playing{background:#ffe27a;animation:none}
+.voicebtn.playing i{background:var(--ink)}.voicebtn.playing b{border-color:var(--ink)}
+.voicebtn:hover{filter:brightness(1.15)}
+@media (prefers-reduced-motion:reduce){.voicebtn{animation:none!important}}
+.twin .news.pop{animation:pop .3s steps(3),newsflash 1s steps(2) 3}
+@keyframes newsflash{50%{background:#ffd0d6}}

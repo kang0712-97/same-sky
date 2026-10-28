@@ -192,30 +192,38 @@ grant execute on function ss_create_couple(), ss_get_couple(text), ss_save_membe
   ss_add_photo(text,text,text,text,text,text,text), ss_list_photos(text,int), ss_add_note(text,text,text,real,real,text), ss_list_notes(text) to anon;
 grant execute on function ss_save_room(text,text,jsonb,text), ss_get_rooms(text), ss_heart_photo(text,uuid,text,text) to anon;
 
--- ───────── 6차: 목소리 쪽지 (최대 15초, 오디오를 base64 글자로 저장) ─────────
+-- ───────── 6·7차: 목소리 쪽지 + 읽음 표시 (최대 15초, 오디오를 base64 글자로 저장) ─────────
 create table if not exists ss_voices (
   id uuid primary key default gen_random_uuid(),
   code text not null references ss_couples(code) on delete cascade,
   slot text not null check (slot in ('a','b')),
   mime text not null check (mime ~ '^audio/[a-z0-9.+-]+$'),
   dur real not null check (dur between 0.3 and 16),
-  data text not null check (char_length(data) between 100 and 420000),
+  data text not null,
   created_at timestamptz not null default now()
 );
 create index if not exists ss_voices_code_time on ss_voices(code, created_at desc);
 alter table ss_voices enable row level security;
 revoke all on ss_voices from anon, authenticated;
+-- 7차: 방에 붙는 위치, 받은 사람이 확인한 시각, 크기 제한 완화(아이폰 녹음이 더 큼)
+alter table ss_voices add column if not exists x real not null default 50;
+alter table ss_voices add column if not exists y real not null default 40;
+alter table ss_voices add column if not exists read_at timestamptz;
+alter table ss_notes  add column if not exists read_at timestamptz;
+alter table ss_voices drop constraint if exists ss_voices_data_check;
+alter table ss_voices drop constraint if exists ss_voices_data_len;
+alter table ss_voices add constraint ss_voices_data_len check (char_length(data) between 100 and 1200000);
 
--- 보내기: 커플당 하루 40개까지, 최근 60개만 보관
-create or replace function ss_add_voice(p_code text, p_slot text, p_mime text, p_dur real, p_data text, p_token text) returns uuid
+drop function if exists ss_add_voice(text,text,text,real,text,text);
+create or replace function ss_add_voice(p_code text, p_slot text, p_mime text, p_dur real, p_data text, p_x real, p_y real, p_token text) returns uuid
 language plpgsql security definer set search_path = public as $$
 declare new_id uuid;
 begin
   perform ss_auth(p_code, p_slot, p_token);
   if not exists (select 1 from ss_couples where code = upper(p_code)) then raise exception 'no_couple'; end if;
-  if p_data !~ '^[A-Za-z0-9+/=]+$' then raise exception 'bad_audio'; end if;
+  if p_data ~ '[^A-Za-z0-9+/=]' then raise exception 'bad_audio'; end if;
   if (select count(*) from ss_voices where code = upper(p_code) and created_at > now() - interval '1 day') >= 40 then raise exception 'limit'; end if;
-  insert into ss_voices(code, slot, mime, dur, data) values (upper(p_code), p_slot, p_mime, p_dur, p_data) returning id into new_id;
+  insert into ss_voices(code, slot, mime, dur, data, x, y) values (upper(p_code), p_slot, p_mime, p_dur, p_data, greatest(0, least(100, p_x)), greatest(0, least(100, p_y))) returning id into new_id;
   delete from ss_voices where code = upper(p_code) and id not in (select id from ss_voices where code = upper(p_code) order by created_at desc limit 60);
   return new_id;
 end $$;
@@ -224,23 +232,39 @@ end $$;
 create or replace function ss_list_voices(p_code text) returns json
 language sql security definer set search_path = public as $$
   select coalesce(json_agg(t), '[]'::json) from (
-    select id, slot, mime, dur, created_at from ss_voices where code = upper(p_code) order by created_at desc limit 60
+    select id, slot, mime, dur, x, y, created_at, read_at from ss_voices where code = upper(p_code) order by created_at desc limit 60
   ) t;
 $$;
 create or replace function ss_get_voice(p_code text, p_id uuid) returns json
 language sql security definer set search_path = public as $$
   select row_to_json(t) from (select mime, data from ss_voices where code = upper(p_code) and id = p_id) t;
 $$;
-grant execute on function ss_add_voice(text,text,text,real,text,text), ss_list_voices(text), ss_get_voice(text,uuid) to anon;
+-- 쪽지 목록에도 확인 시각 포함
+create or replace function ss_list_notes(p_code text) returns json
+language sql security definer set search_path = public as $$
+  select coalesce(json_agg(t), '[]'::json) from (
+    select id, slot, body, x, y, created_at, read_at from ss_notes where code = upper(p_code) order by created_at desc limit 300
+  ) t;
+$$;
 
--- 변경 감지에 목소리 쪽지 포함 (ss_voices 표가 만들어진 뒤에 다시 정의)
+-- 받은 사람이 확인하면 표시(상대 쪽 방에서 쪽지가 사라짐). p_ids 가 비면 상대가 보낸 안 읽은 것 전부
+create or replace function ss_mark_read(p_code text, p_slot text, p_token text, p_ids uuid[]) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  perform ss_auth(p_code, p_slot, p_token);
+  update ss_notes  set read_at = now() where code = upper(p_code) and slot <> p_slot and read_at is null and (p_ids is null or id = any(p_ids));
+  update ss_voices set read_at = now() where code = upper(p_code) and slot <> p_slot and read_at is null and (p_ids is null or id = any(p_ids));
+end $$;
+grant execute on function ss_add_voice(text,text,text,real,text,real,real,text), ss_list_voices(text), ss_get_voice(text,uuid), ss_list_notes(text), ss_mark_read(text,text,text,uuid[]) to anon;
+
+-- 변경 감지: 쪽지·목소리의 새로 생김과 확인 시각 변화를 모두 반영 (표가 만들어진 뒤에 다시 정의)
 create or replace function ss_state(p_code text) returns json
 language sql security definer set search_path = public as $$
   select json_build_object(
     'members', (select coalesce(max(updated_at)::text, '') from ss_members where code = upper(p_code)),
     'photos',  (select count(*)::text || coalesce(sum(cardinality(hearts))::text, '0') || coalesce(max(taken_at)::text, '') from ss_photos where code = upper(p_code)),
-    'notes',   (select count(*)::text || coalesce(max(created_at)::text, '') from ss_notes where code = upper(p_code)),
+    'notes',   (select count(*)::text || coalesce(max(created_at)::text, '') || coalesce(max(read_at)::text, '') from ss_notes where code = upper(p_code)),
     'rooms',   (select coalesce(max(updated_at)::text, '') from ss_rooms where code = upper(p_code)),
-    'voices',  (select count(*)::text || coalesce(max(created_at)::text, '') from ss_voices where code = upper(p_code)));
+    'voices',  (select count(*)::text || coalesce(max(created_at)::text, '') || coalesce(max(read_at)::text, '') from ss_voices where code = upper(p_code)));
 $$;
 grant execute on function ss_state(text) to anon;

@@ -40,8 +40,9 @@
     async listPhotos() { return JSON.parse(JSON.stringify(L.photos)); },   // 복사본을 돌려줘야 변경 감지가 동작
     async addNote(code, slot, n) { L.notes.unshift({ id: 'l' + Date.now(), slot, body: n.body, x: n.x, y: n.y, created_at: new Date().toISOString() }); saveL(); },
     async listNotes() { return JSON.parse(JSON.stringify(L.notes)); },
-    async addVoice(code, slot, v) { (L.voices || (L.voices = [])).unshift({ id: 'l' + Date.now(), slot, mime: v.mime, dur: v.dur, data: v.data, created_at: new Date().toISOString() }); saveL(); },
+    async addVoice(code, slot, v) { (L.voices || (L.voices = [])).unshift({ id: 'l' + Date.now(), slot, mime: v.mime, dur: v.dur, data: v.data, x: v.x, y: v.y, read_at: null, created_at: new Date().toISOString() }); saveL(); },
     async listVoices() { return (L.voices || []).map(({ data, ...m }) => m); },
+    async markRead(code, slot, ids) { const t = new Date().toISOString(); [...L.notes, ...(L.voices || [])].forEach(x => { if (x.slot !== slot && !x.read_at && (!ids || ids.includes(x.id))) x.read_at = t; }); saveL(); },
     async getVoice(code, id) { const v = (L.voices || []).find(x => String(x.id) === String(id)); return v ? { mime: v.mime, data: v.data } : null; },
     async getRooms() { const r = L.rooms || {}; return [{ slot: S.slot, room: r[S.slot] || S.room || null }, { slot: otherSlot(), room: r[otherSlot()] || Room.demoRoom() }].filter(x => x.room); },
     async saveRoom(code, slot, room) { (L.rooms || (L.rooms = {}))[slot] = room; saveL(); },
@@ -82,7 +83,8 @@
     if (e.code === 'forbidden') return '이 자리는 다른 기기가 쓰고 있어요. 원래 쓰던 기기의 "기기 변경 열쇠"가 필요해요.';
     if (e.code === 'limit') return '오늘 3장을 모두 보냈어요.';
     if (e.code === 'too_big') return '사진 용량이 너무 커요.';
-    return '서버와 통신하지 못했어요. 잠시 후 다시 시도해 주세요.';
+    const why = String((e && e.message) || '').replace(/\s+/g, ' ').slice(0, 70);
+    return '서버와 통신하지 못했어요. 잠시 후 다시 시도해 주세요.' + (why ? ' (' + why + ')' : '');
   }
 
   /* ---------- 장면 ---------- */
@@ -232,13 +234,18 @@
     $('tbPhotos').classList.toggle('unread', !!(u.np + u.nh)); $('tbRoom').classList.toggle('unread', !!(u.nn + u.nv));
     $('goPhotos').textContent = '사진함' + (u.np + u.nh ? ' ●' + (u.np + u.nh) : ''); $('goNotes').textContent = '쪽지함' + (u.nn + u.nv ? ' ●' + (u.nn + u.nv) : '');
   }
+  let newsT = 0;
+  function flashNews(msg) {   // 홈 화면 아바타 영역 위에 새로 온 소식을 잠깐 크게 보여 줌
+    const box = $('news'); box.hidden = false; box.textContent = msg; box.classList.remove('pop'); void box.offsetWidth; box.classList.add('pop'); $('twin').classList.add('hasnews');
+    clearTimeout(newsT); newsT = setTimeout(() => { box.classList.remove('pop'); paintNews(); }, 8000);
+  }
   let prevU = null;
   function notifyArrivals() {
     const u = unread();
     if (prevU && D.partner) {
       const m = [];
       if (u.np > prevU.np) m.push('새 사진'); if (u.nn > prevU.nn) m.push('새 쪽지'); if (u.nv > prevU.nv) m.push('목소리 쪽지'); if (u.nh > prevU.nh) m.push('내 사진에 하트 ♥');
-      if (m.length) toast(D.partner.name + '님이 보냈어요 · ' + m.join(' · '));
+      if (m.length) { const msg = D.partner.name + '님이 보냈어요 · ' + m.join(' · '); toast(msg); flashNews('● ' + msg); }
     }
     prevU = u;
   }
@@ -340,7 +347,8 @@
   }
 
   /* ---------- 방 위의 쪽지 (받은 쪽지는 내 방, 내가 보낸 쪽지는 상대 방) ---------- */
-  const roomNotes = () => roomTab === 'pt' ? D.notes.filter(n => n.slot === S.slot) : D.notes.filter(n => n.slot !== S.slot);
+  const roomNotes = () => { const mine = n => roomTab === 'pt' ? n.slot === S.slot : n.slot !== S.slot; return D.notes.filter(n => mine(n) && !n.read_at).map(n => ({ ...n, kind: 'note' })).concat(D.voices.filter(v => mine(v) && !v.read_at).map(v => ({ ...v, kind: 'voice' }))); };
+  const readNow = id => { if (roomTab === 'me') { const t = new Date().toISOString(); [...D.notes, ...D.voices].forEach(x => { if (x.id === id) x.read_at = t; }); api().markRead(S.code, S.slot, [id]).catch(() => { }); } };   // 받은 사람이 확인하면 방에서 사라지고 쪽지함에만 남음
   function drawRoomNotes() {
     const st = $('rstage'); if (!st || !$('v-room').classList.contains('on')) return;
     let box = st.querySelector('.rnotes'); if (box) box.remove();
@@ -348,10 +356,23 @@
     const bub = document.createElement('div'); bub.className = 'rbubble'; st.querySelectorAll('.rbubble').forEach(x => x.remove()); st.appendChild(bub);
     const list = roomNotes();
     list.forEach(n => {
+      if (n.kind === 'voice') {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'voicebtn'; b.style.left = clampPct(n.x) + '%'; b.style.top = clampPct(n.y) + '%';
+        b.setAttribute('aria-label', '목소리 쪽지 듣기 · ' + nameOf(n.slot)); b.appendChild(document.createElement('i')); b.appendChild(document.createElement('b'));
+        b.onclick = async e => {
+          e.stopPropagation(); if (b.classList.contains('playing')) return;
+          bub.textContent = nameOf(n.slot) + '님의 목소리 쪽지'; bub.classList.remove('on'); void bub.offsetWidth; bub.classList.add('on'); clearTimeout(bub._t); bub._t = setTimeout(() => bub.classList.remove('on'), 4000);
+          b.classList.add('playing'); let fin = false, tm = 0;
+          const finish = ok => { if (fin) return; fin = true; clearTimeout(tm); b.classList.remove('playing'); if (ok && roomTab === 'me') { readNow(n.id); b.remove(); } };   // 잘 들렸을 때만 방에서 사라짐(실패하면 다시 누를 수 있음)
+          tm = setTimeout(() => finish(!!playing), (Number(n.dur) || 3) * 1000 + 1500);
+          await playVoice(n.id, null, finish);
+        };
+        box.appendChild(b); return;
+      }
       const b = document.createElement('button'); b.type = 'button'; b.className = 'notebtn'; b.style.left = clampPct(n.x) + '%'; b.style.top = clampPct(n.y) + '%';
       b.setAttribute('aria-label', '쪽지 읽기 · ' + nameOf(n.slot));
       const i = document.createElement('img'); i.src = A.note; i.className = 'note'; i.alt = ''; b.appendChild(i);
-      b.onclick = e => { e.stopPropagation(); bub.textContent = nameOf(n.slot) + ': ' + n.body; bub.classList.remove('on'); void bub.offsetWidth; bub.classList.add('on'); clearTimeout(bub._t); bub._t = setTimeout(() => bub.classList.remove('on'), 3200); };
+      b.onclick = e => { e.stopPropagation(); bub.textContent = nameOf(n.slot) + ': ' + n.body; bub.classList.remove('on'); void bub.offsetWidth; bub.classList.add('on'); clearTimeout(bub._t); bub._t = setTimeout(() => bub.classList.remove('on'), 4000); if (roomTab === 'me') { readNow(n.id); b.remove(); } };
       box.appendChild(b);
     });
     $('noteForm').hidden = roomTab !== 'pt' || !D.partner;
@@ -386,6 +407,7 @@
     });
   }
   /* ---------- 목소리 쪽지 ---------- */
+  function markAllRead() { if (!D.notes.concat(D.voices).some(x => x.slot !== S.slot && !x.read_at)) return; const t = new Date().toISOString(); D.notes.concat(D.voices).forEach(x => { if (x.slot !== S.slot && !x.read_at) x.read_at = t; }); api().markRead(S.code, S.slot, null).catch(() => { }); }   // 쪽지함에서 확인하면 방의 쪽지도 사라짐
   let rec = null, playing = null, playBtn = null;
   function paintRec(txt) { document.querySelectorAll('.recbtn').forEach(b => { b.textContent = txt || (b.closest('#v-notes') ? '● 목소리 쪽지 남기기' : '● 목소리'); b.classList.toggle('rec', !!rec); }); document.querySelectorAll('.recx').forEach(b => { b.hidden = !rec; }); }
   async function toggleRec() {
@@ -399,18 +421,20 @@
     try {
       const v = await r.stop(); if (!v) return;
       if (v.dur < 0.5) { toast('너무 짧아요. 조금 더 길게 말해 주세요.'); return; }
-      await api().addVoice(S.code, S.slot, v); toast('목소리 쪽지를 보냈어요'); await refresh(false);
+      v.x = 8 + Math.random() * 78; v.y = 8 + Math.random() * 44;
+      await api().addVoice(S.code, S.slot, v); toast('목소리 쪽지를 보냈어요 · 상대 방에 붙였어요'); await refresh(false); drawRoomNotes();
     } catch (e) { toast(explain(e)); }
   }
-  async function playVoice(id, btn) {
-    if (playing) { playing.pause(); playing = null; if (playBtn) playBtn.textContent = '▶ 재생'; const same = playBtn === btn; playBtn = null; if (same) return; }
+  async function playVoice(id, btn, onDone) {
+    const setBtn = t => { if (btn) btn.textContent = t; };
+    if (playing) { playing.pause(); playing = null; if (playBtn) playBtn.textContent = '▶ 재생'; const same = !!btn && playBtn === btn; playBtn = null; if (same) return; }
     try {
-      const a = SSVoice.audioFrom(await api().getVoice(S.code, id)); if (!a) { toast('소리를 불러오지 못했어요.'); return; }
-      playing = a; playBtn = btn; btn.textContent = '■ 멈춤';
-      a.onended = () => { btn.textContent = '▶ 재생'; playing = null; playBtn = null; };
-      a.onerror = () => { btn.textContent = '▶ 재생'; playing = null; playBtn = null; toast('이 기기에서는 재생할 수 없는 소리 형식이에요.'); };
+      const a = SSVoice.audioFrom(await api().getVoice(S.code, id)); if (!a) { toast('소리를 불러오지 못했어요.'); onDone && onDone(false); return; }
+      playing = a; playBtn = btn; setBtn('■ 멈춤');
+      const done = ok => { setBtn('▶ 재생'); playing = null; playBtn = null; onDone && onDone(ok); };
+      a.onended = () => done(true); a.onerror = () => { done(false); toast('이 기기에서는 재생할 수 없는 소리 형식이에요.'); };
       await a.play();
-    } catch (e) { btn.textContent = '▶ 재생'; playing = null; playBtn = null; if (e && e.name !== 'AbortError') toast('재생하지 못했어요.'); }
+    } catch (e) { setBtn('▶ 재생'); playing = null; playBtn = null; onDone && onDone(false); if (e && e.name !== 'AbortError') toast('재생하지 못했어요.'); }
   }
   document.querySelectorAll('.recbtn').forEach(b => { b.onclick = toggleRec; });
   document.querySelectorAll('.recx').forEach(b => { b.onclick = () => { if (rec) { rec.cancel(); rec = null; paintRec(); toast('녹음을 취소했어요'); } }; });
@@ -704,7 +728,7 @@
   $('rClear').onclick = () => { if (roomView && roomView.room.items.length && confirm('방의 가구를 모두 치울까요?')) roomView.clear(); };
   document.addEventListener('keydown', e => { if ((e.key === 'Delete' || e.key === 'Backspace') && roomView && $('v-room').classList.contains('on') && roomTab === 'me' && !/INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) { e.preventDefault(); roomView.remove(); } });
   $('goPhotos').onclick = () => { drawPhotos(); view('v-photos'); markPhotosSeen(); }; $('backP').onclick = () => view('v-home');
-  $('goNotes').onclick = () => { drawNotesBox(); view('v-notes'); markNotesSeen(); }; $('backN').onclick = () => view('v-home');
+  $('goNotes').onclick = () => { drawNotesBox(); view('v-notes'); markNotesSeen(); markAllRead(); }; $('backN').onclick = () => view('v-home');
   $('tabIn').onclick = () => { notesTab = 'in'; drawNotesBox(); }; $('tabOut').onclick = () => { notesTab = 'out'; drawNotesBox(); };
   $('photo').onclick = () => { pending = null; $('pPrev').hidden = true; $('pCap').value = ''; $('pSend').disabled = true; $('pdot').checked = false; $('pFile').value = ''; $('pCam').value = ''; $('m-photo').hidden = false; };
   $('pFile').onchange = $('pCam').onchange = e => { if (e.target.files[0]) onPhotoFile(e.target.files[0]); };

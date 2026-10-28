@@ -30,7 +30,7 @@
 
   // 쓰기 API 가 끝나면 상대에게 신호를 보낸다
   const A = window.SSApi;
-  if (A) ['saveMember', 'addPhoto', 'heartPhoto', 'addNote', 'saveRoom', 'addVoice'].forEach(n => {
+  if (A) ['saveMember', 'addPhoto', 'heartPhoto', 'addNote', 'saveRoom', 'addVoice', 'markRead'].forEach(n => {
     const f = A[n]; if (typeof f !== 'function') return;
     A[n] = async function () { const r = await f.apply(this, arguments); Live.ping(); return r; };
   });
