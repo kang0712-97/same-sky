@@ -81,11 +81,13 @@ base = Image.open(os.path.join(IN, 'guides', 'base-girl.png')).convert('RGB')
 base_rgba = rgba(base, isgreen)
 BX0, BY0, BX1, BY1 = base_rgba.getbbox()
 BCX = (BX0 + BX1) / 2
-G = FIG / (BY1 - BY0)
+HS = 1.45   # 머리 파츠 확대 배율(추천 캐릭터처럼 머리가 큰 비율로)
 TOP_Y = FEET - FIG
 base_headcx = sum(x for y in range(BY0, BY0 + 50) for x in range(base.size[0]) if nongreen(base.getpixel((x, y)))) / \
     sum(1 for y in range(BY0, BY0 + 50) for x in range(base.size[0]) if nongreen(base.getpixel((x, y))))
 bn = neck(base, isskin, 0.22, 0.33)  # (y, w, cx) 목
+BYT = bn[0] - (bn[0] - BY0) * HS   # 머리를 키운 뒤의 꼭대기
+G = FIG / (BY1 - BYT)
 bhead_w = max(w for y, w, cx in widths(base, isskin) if y < bn[0] and w > 0)
 bh = Image.open(os.path.join(IN, 'guides', 'blankhead-girl.png')).convert('RGB')
 gn = neck(bh, isskin, 0.35, 0.75)
@@ -93,7 +95,7 @@ ghead_w = max(w for y, w, cx in widths(bh, isskin) if y < gn[0] and w > 0)
 c0 = next(c for i, c in cells(os.path.join(IN, 'tops', 'T1.png')) if i == 0)
 gb = bbox_of(c0, isgray)
 S_FULL = (BY1 - BY0) / (gb[3] - gb[1])
-EYE_DROP = 45  # 눈을 앞머리 아래로 내리는 양(기준 몸 픽셀)
+EYE_DROP = 80  # 눈을 앞머리 아래로 내리는 양(기준 몸 픽셀)
 S_HEAD = 1.2090724  # 머리 시트(눈 E1 구판 기준) → 기준 몸 배율
 
 
@@ -101,7 +103,7 @@ def put(lay, s, cell_pt, base_pt):
     """lay(RGBA) 의 cell_pt 가 기준 몸의 base_pt 에 오도록 220x240 캔버스로 변환."""
     f = s * G
     u0 = CX + (base_pt[0] - BCX) * G
-    v0 = TOP_Y + (base_pt[1] - BY0) * G
+    v0 = TOP_Y + (base_pt[1] - BYT) * G
     X0 = cell_pt[0] - u0 / f; Y0 = cell_pt[1] - v0 / f
     M = int(max(0, -X0, -Y0, X0 + W / f - lay.size[0], Y0 + H / f - lay.size[1])) + 4
     pad = Image.new('RGBA', (lay.size[0] + 2 * M, lay.size[1] + 2 * M)); pad.paste(lay, (M, M))
@@ -161,32 +163,41 @@ def eyes_layer(c):
         for x in range(w):
             if ip[x, y] and not isskin(px[x, y]): lp[x, y] = px[x, y] + (255,)
     cxh = [cx for y, wd, cx in ws if y == top + 40][0]
-    s = bhead_w / hw
-    return put(lay, s, (cxh, top), (base_headcx, BY0 + EYE_DROP))
+    s = bhead_w / hw * HS
+    return put(lay, s, (cxh, top), (base_headcx, bn[0] - (bn[0] - BY0 - EYE_DROP) * HS))
 
 
 def hair_layer(c):
     # 머리 시트의 마네킹 위치는 칸마다 같으므로 고정 기준점(HF1 두 번째 칸의 목)을 쓴다
     lay = rgba(c, lambda p: isgreen(p) or ismag(p) or isgray(p))
-    return put(lay, S_HEAD, (181, 316), (bn[2], bn[0]))
+    return put(lay, S_HEAD * HS, (181, 316), (bn[2], bn[0]))
 
 
 def body_layer():
-    # 속옷을 걷어 낸 단색 몸: 기준 몸의 윤곽을 피부색으로 채움
+    # 속옷을 걷어 낸 단색 몸. 목 위쪽(머리)만 HS배 키워 목 기준으로 다시 붙인다.
     sil = Image.new('RGBA', base.size)
     bp = base.load(); sp = sil.load()
     for y in range(base.size[1]):
         for x in range(base.size[0]):
             if nongreen(bp[x, y]): sp[x, y] = SKIN + (255,)
-    # 불투명 영역을 안쪽 1칸 침식 방지용으로 약간 닫아 구멍(윤곽선 틈) 메움
     a = sil.split()[3].filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.MinFilter(5)); sil.putalpha(a)
-    return put(sil, 1.0, (0, 0), (0, 0))
+    ny, ncx = int(bn[0]), bn[2]
+    head = sil.crop((0, 0, sil.size[0], ny))
+    hs = head.resize((round(head.size[0] * HS), round(head.size[1] * HS)), Image.NEAREST)
+    body = sil.copy(); body.paste((0, 0, 0, 0), (0, 0, sil.size[0], ny))
+    big = Image.new('RGBA', (sil.size[0] + 2000, sil.size[1] + 2000)); big.paste(body, (1000, 1000))
+    big.alpha_composite(hs, (round(1000 + ncx - ncx * HS), round(1000 + ny - ny * HS)))
+    return put(big, 1.0, (1000, 1000), (0, 0))
 
 
 manifest = {'w': W, 'h': H, 'skin': '#%02x%02x%02x' % SKIN, 'order': ['body', 'shoes', 'bottom', 'top', 'one', 'hair', 'eyes'], 'kinds': {}}
 
 
+SKIP = {'bottom-B4_1', 'one-O3_1'}   # 마네킹 회색 제거로 깨지는 칸
+
+
 def add(kind, pid, img, recolor=None):
+    if '%s-%s' % (kind, pid) in SKIP: return
     fn = '%s-%s.png' % (kind, pid)
     img.save(os.path.join(OUT, fn))
     e = {'id': '%s-%s' % (kind, pid), 'file': 'f/' + fn}

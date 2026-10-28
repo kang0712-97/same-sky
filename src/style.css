@@ -293,3 +293,15 @@ img.th{width:76px;height:76px;object-fit:cover;border:3px solid var(--ink);curso
   .modal .mbox{width:100%;max-width:none;border-left:0;border-right:0;border-bottom:0}
 }
 label.btn{display:flex;align-items:center;justify-content:center}
+
+/* 아바타 꾸미기 전체 화면 */
+.dress{max-width:560px;margin:0 auto}
+.dhead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0 10px}
+.dhead strong{font-size:15px}
+.dstage{position:sticky;top:0;z-index:5;height:280px;overflow:hidden;border:3px solid var(--ink);background:linear-gradient(#efe6cc 0 74%,#d9c9a0 74% 76%,#cbb88b 76%);margin-bottom:10px}
+.dstage img{position:absolute;left:50%;transform:translateX(-50%);top:-142px;height:456px;image-rendering:pixelated}
+.dress .avtabs{margin-bottom:8px}
+.dress .avtabs .tab{flex:1;font-size:14px;padding:9px 6px}
+.dress .ogrid{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))}
+.dress .ocell img{width:68px;height:68px}
+@media (max-width:700px){.dstage{height:250px}.dstage img{top:-131px;height:420px}}

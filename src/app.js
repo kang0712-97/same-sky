@@ -179,7 +179,7 @@
   function paintTabbar() {   // 모바일 하단 탭바: 지금 화면 표시 + 안 본 소식 점
     const v = document.body.dataset.view, cur = v === 'v-home' ? 'tbHome' : v === 'v-room' ? (roomTab === 'pt' ? 'tbPt' : 'tbRoom') : v === 'v-photos' ? 'tbPhotos' : v === 'v-notes' ? 'tbNotes' : '';
     document.querySelectorAll('#tabbar button').forEach(b => { b.classList.toggle('on', b.id === cur); if (b.id === cur) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-    document.body.classList.toggle('hasnav', !!(S && S.me && started && v !== 'v-setup' && v !== 'v-connect'));
+    document.body.classList.toggle('hasnav', !!(S && S.me && started && v !== 'v-setup' && v !== 'v-dress' && v !== 'v-connect'));
   }
   function heart(stage, e) {
     const r = stage.getBoundingClientRect(), h = document.createElement('img');
@@ -377,14 +377,16 @@
   const AVTABS = [['char', '캐릭터'], ['hair', '머리'], ['face', '얼굴'], ['cloth', '옷'], ['item', '소품']];
   const MIXTABS = [['char', '추천'], ['face', '얼굴'], ['hair', '머리'], ['cloth', '옷']];
   function renderSetupAvatar() {
+    const mixOk = SSMix.ready();
+    if (mixOk && !draft.avatar.mix && !draft.avatar.custom && avTab !== 'char') draft.avatar = SSMix.defaultMix();   // 탭에서 하나씩 고르면 직접 꾸미기로 전환
     const a = draft.avatar, tabs = $('avTabs'), panel = $('avPanel'); tabs.innerHTML = ''; panel.innerHTML = '';
-    $('avPrev').src = Av.thumbUrl(a);
-    const mix = !!a.mix && SSMix.ready();   // 파츠로 직접 꾸미는 캐릭터
-    const simple = !mix && (a.custom || Av.byId(a.char).v2);   // 완성형 캐릭터(새 24종)·내 사진 캐릭터는 고르기만
+    $('avPrev').src = Av.thumbUrl(a); $('avBig').src = Av.layerUrl(a);
+    const mix = !!a.mix && mixOk;   // 파츠로 직접 꾸미는 캐릭터
+    const simple = !!a.custom || (!mixOk && Av.byId(a.char).v2);   // 내 사진 캐릭터는 고르기만
     if (simple) avTab = 'char';
-    if (mix && !MIXTABS.some(t => t[0] === avTab)) avTab = 'face';
+    if (mixOk && !MIXTABS.some(t => t[0] === avTab)) avTab = 'char';
     tabs.hidden = !!simple;
-    (mix ? MIXTABS : AVTABS).forEach(([id, label]) => {
+    (mixOk ? MIXTABS : AVTABS).forEach(([id, label]) => {
       if (simple && id !== 'char') return;
       const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.className = 'tab' + (avTab === id ? ' on' : ''); b.textContent = label;
       b.setAttribute('aria-selected', avTab === id); b.onclick = () => { avTab = id; renderSetupAvatar(); }; tabs.appendChild(b);
@@ -421,8 +423,7 @@
     } else if (mix && avTab === 'cloth') {
       part('상의', 'top', false, T); part('하의', 'bottom', false, T); part('원피스', 'one', true, T); part('신발', 'shoes', true, T);
     } else if (avTab === 'char') {
-      if (!mix && SSMix.ready()) { const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'btn'; bt.textContent = '직접 꾸미기 (여자 몸)'; bt.onclick = () => { draft.avatar = SSMix.defaultMix(); avTab = 'face'; renderSetupAvatar(); }; panel.appendChild(bt); const h = document.createElement('div'); h.className = 'hint'; h.textContent = '눈 · 머리 · 옷 · 신발을 하나씩 골라 만들어요. 남자 몸은 준비 중이에요.'; panel.appendChild(h); }
-      if (mix) { const h = document.createElement('div'); h.className = 'hint'; h.textContent = '아래에서 고르면 완성된 캐릭터로 바뀌고, 지금 꾸민 모습은 사라져요.'; panel.appendChild(h); }
+      { const h = document.createElement('div'); h.className = 'hint'; h.textContent = mix ? '추천을 고르면 완성된 캐릭터로 바뀌어요. 지금 꾸민 모습은 취소 전까지 위 탭에서 다시 만들 수 있어요.' : '마음에 드는 캐릭터를 고르거나, 위 탭에서 하나씩 바꿔 보세요. (탭을 누르면 직접 꾸미기로 바뀌어요)'; panel.appendChild(h); }
       [['f', '여자'], ['m', '남자']].forEach(([grp, label]) => { title(label); const g = grid(); Av.list().filter(c => c.group === grp).forEach(c => cell(g, c.name, Av.thumbUrl({ char: c.id }), !a.custom && !a.mix && Av.byId(a.char).id === c.id, () => { draft.avatar = { char: c.id, hair: null, top: null, bottom: null }; })); });
       if (a.custom) { const h = document.createElement('div'); h.className = 'hint'; h.textContent = '지금은 내가 만든 캐릭터예요. 위에서 고르면 꾸미기가 켜져요.'; panel.appendChild(h); }
     } else if (avTab === 'hair') {
@@ -444,6 +445,10 @@
       accRow();
     }
   }
+  let dressSnap = '';
+  $('openDress').onclick = () => { dressSnap = JSON.stringify(draft.avatar); avTab = 'char'; renderSetupAvatar(); view('v-dress'); };
+  $('dressDone').onclick = () => { renderSetupAvatar(); view('v-setup'); };
+  $('dressBack').onclick = () => { draft.avatar = JSON.parse(dressSnap); renderSetupAvatar(); view('v-setup'); };
   function renderPicked() {
     const p = draft.place, cn = Geo.country(p.cc), el = $('picked');
     el.textContent = p.city ? '✓ ' + p.city.name + ' (' + cn.name + ')' : '도시를 입력하지 않으면 수도(' + cn.capital + ')로 설정돼요';

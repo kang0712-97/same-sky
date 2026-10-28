@@ -27,10 +27,7 @@
      <div class="fld">아바타
       <div class="avbox">
        <img id="avPrev" class="avprev" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
-       <div class="avctl">
-        <div class="avtabs" id="avTabs" role="tablist"></div>
-        <div id="avPanel"></div>
-       </div>
+       <div class="avctl"><button type="button" class="btn" id="openDress">아바타 꾸미기</button><div class="hint">눈 · 머리 · 옷 · 신발을 하나씩 골라 꾸밀 수 있어요.</div></div>
       </div>
       <details class="up"><summary>내 이미지로 도트 캐릭터 만들기</summary>
        <div class="upbody">
@@ -55,6 +52,16 @@
     <div class="row2"><button type="button" class="btn" id="keyBtn" hidden>기기 변경 열쇠 복사</button><button type="button" class="btn" id="resetEdit" hidden>이 기기 초기화</button><button type="button" class="btn" id="setupCancel" hidden>취소</button><button class="btn p" type="submit">다음</button></div>
     <div class="err" id="setupErr"></div>
    </form>
+  </div>
+
+  <!-- 1-2. 아바타 꾸미기 (전체 화면) -->
+  <div class="view" id="v-dress">
+   <div class="dress">
+    <div class="dhead"><button type="button" class="btn small" id="dressBack">취소</button><strong>아바타 꾸미기</strong><button type="button" class="btn small" id="dressDone">완료</button></div>
+    <div class="dstage"><img id="avBig" alt="내 아바타" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></div>
+    <div class="avtabs" id="avTabs" role="tablist"></div>
+    <div id="avPanel"></div>
+   </div>
   </div>
 
   <!-- 2. 커플 연결 -->
