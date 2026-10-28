@@ -122,6 +122,7 @@
   <div class="view town" id="v-notes">
    <div class="head"><b>쪽지함</b><button class="btn small" id="backN">◀ 돌아가기</button></div>
    <div class="tabs"><button class="tab on" id="tabIn">받은 쪽지</button><button class="tab" id="tabOut">보낸 쪽지</button></div>
+   <div class="foot"><button class="btn p small recbtn" type="button">● 목소리 쪽지 남기기</button><button class="btn small recx" type="button" hidden>취소</button><span class="muted" style="font-size:12px">최대 15초 · 상대에게 보내요</span></div>
    <div class="list" id="noteList"></div>
   </div>
 
@@ -131,7 +132,7 @@
    <div class="tabs"><button class="tab on" id="tabRMe">내 방</button><button class="tab" id="tabRPt">상대 방 구경</button></div>
    <div class="rstage" id="rstage"></div>
    <div class="emptyhint" id="roomEmpty"></div>
-   <div class="foot" id="noteForm" hidden><input id="noteIn" aria-label="쪽지 내용" maxlength="24" placeholder="상대 방에 쪽지 붙이기 (최대 24자)"><button class="btn p small" id="addNote" type="button">붙이기</button></div>
+   <div class="foot" id="noteForm" hidden><input id="noteIn" aria-label="쪽지 내용" maxlength="24" placeholder="상대 방에 쪽지 붙이기 (최대 24자)"><button class="btn p small" id="addNote" type="button">붙이기</button><button class="btn small recbtn" type="button">● 목소리</button><button class="btn small recx" type="button" hidden>취소</button></div>
    <div class="rtools" id="rtools">
     <div class="rsel" id="rsel" hidden><span id="rselName"></span><button class="btn small" id="rFlip" type="button">↔ 뒤집기</button><button class="btn small" id="rRot" type="button">↻ 돌리기</button><button class="btn small" id="rSm" type="button" aria-label="작게">－ 작게</button><button class="btn small" id="rBg" type="button" aria-label="크게">＋ 크게</button><button class="btn small" id="rDel" type="button">✕ 치우기</button></div>
     <button class="btn small" id="rMe" type="button" style="align-self:flex-start">☺ 내 캐릭터 세우기</button>
@@ -188,6 +189,8 @@
 <script src="src/mix.js"></script>
 <script src="src/avatar.js"></script>
 <script src="src/api.js"></script>
+<script src="src/live.js"></script>
+<script src="src/voice.js"></script>
 <script src="src/room.js"></script>
 <script src="src/app.js"></script>
 </body>

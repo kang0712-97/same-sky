@@ -305,3 +305,8 @@ label.btn{display:flex;align-items:center;justify-content:center}
 .dress .ogrid{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))}
 .dress .ocell img{width:68px;height:68px}
 @media (max-width:700px){.dstage{height:250px}.dstage img{top:-131px;height:420px}}
+
+/* 목소리 쪽지 */
+.recbtn.rec{background:#c8463c;color:#fff;border-color:var(--ink)}
+.nrow.voice{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.nrow.voice .nm2{flex:1 1 100%}

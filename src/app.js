@@ -16,7 +16,7 @@
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
   const saveL = () => { try { localStorage.setItem(LKEY, JSON.stringify(L)); } catch (e) { toast('저장 공간이 부족해요'); } };
   const W = { me: { kind: 'clear', temp: '-' }, pt: { kind: 'night', temp: '-' } };
-  let D = { partner: null, photos: [], notes: [], rooms: { me: null, pt: null } };
+  let D = { partner: null, photos: [], notes: [], voices: [], rooms: { me: null, pt: null } };
   const invite = (() => {   // 초대 링크(?code=XXXXXX)로 들어왔는지
     let c = ''; try { c = (new URLSearchParams(location.search).get('code') || '').trim().toUpperCase(); } catch (e) { }
     if (c) { try { history.replaceState(null, '', location.pathname); } catch (e) { } }
@@ -40,9 +40,12 @@
     async listPhotos() { return JSON.parse(JSON.stringify(L.photos)); },   // 복사본을 돌려줘야 변경 감지가 동작
     async addNote(code, slot, n) { L.notes.unshift({ id: 'l' + Date.now(), slot, body: n.body, x: n.x, y: n.y, created_at: new Date().toISOString() }); saveL(); },
     async listNotes() { return JSON.parse(JSON.stringify(L.notes)); },
+    async addVoice(code, slot, v) { (L.voices || (L.voices = [])).unshift({ id: 'l' + Date.now(), slot, mime: v.mime, dur: v.dur, data: v.data, created_at: new Date().toISOString() }); saveL(); },
+    async listVoices() { return (L.voices || []).map(({ data, ...m }) => m); },
+    async getVoice(code, id) { const v = (L.voices || []).find(x => String(x.id) === String(id)); return v ? { mime: v.mime, data: v.data } : null; },
     async getRooms() { const r = L.rooms || {}; return [{ slot: S.slot, room: r[S.slot] || S.room || null }, { slot: otherSlot(), room: r[otherSlot()] || Room.demoRoom() }].filter(x => x.room); },
     async saveRoom(code, slot, room) { (L.rooms || (L.rooms = {}))[slot] = room; saveL(); },
-    async getState() { return { p: L.photos.length + ':' + L.photos.reduce((s, x) => s + (x.hearts || []).length, 0), n: L.notes.length, r: JSON.stringify(L.rooms || {}) }; }
+    async getState() { return { p: L.photos.length + ':' + L.photos.reduce((s, x) => s + (x.hearts || []).length, 0), n: L.notes.length, v: (L.voices || []).length, r: JSON.stringify(L.rooms || {}) }; }
   };
   const api = () => S && S.mode === 'local' ? localApi : Remote;
 
@@ -206,34 +209,35 @@
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   /* ---------- 새 소식 ---------- */
-  const seen = () => S.seen || (S.seen = { p: '', n: '', h: [] });
+  const seen = () => S.seen || (S.seen = { p: '', n: '', v: '', h: [] });
   const hearted = p => (p.hearts || []).filter(h => h !== S.slot).length > 0;
   function unread() {
     const sn = seen();
     return {
       np: D.photos.filter(p => p.slot !== S.slot && p.taken_at > sn.p).length,
       nn: D.notes.filter(n => n.slot !== S.slot && n.created_at > sn.n).length,
+      nv: D.voices.filter(v => v.slot !== S.slot && v.created_at > (sn.v || '')).length,
       nh: D.photos.filter(p => p.slot === S.slot && hearted(p) && !(sn.h || []).includes(p.id)).length
     };
   }
   function markPhotosSeen() { const sn = seen(); const t = D.photos.filter(p => p.slot !== S.slot).map(p => p.taken_at).sort().pop(); if (t) sn.p = t; sn.h = D.photos.filter(p => p.slot === S.slot && hearted(p)).map(p => p.id); save(); paintNews(); }
-  function markNotesSeen() { const sn = seen(); const t = D.notes.filter(n => n.slot !== S.slot).map(n => n.created_at).sort().pop(); if (t) sn.n = t; save(); paintNews(); }
+  function markNotesSeen() { const sn = seen(); const t = D.notes.filter(n => n.slot !== S.slot).map(n => n.created_at).sort().pop(); if (t) sn.n = t; const tv = D.voices.filter(v => v.slot !== S.slot).map(v => v.created_at).sort().pop(); if (tv) sn.v = tv; save(); paintNews(); }
   function paintNews() {
     if (!S || !D.partner) { $('news').hidden = true; return; }
     const u = unread(), box = $('news'), parts = [];
-    if (u.np) parts.push('사진 ' + u.np); if (u.nn) parts.push('쪽지 ' + u.nn); if (u.nh) parts.push('♥ ' + u.nh);
+    if (u.np) parts.push('사진 ' + u.np); if (u.nn) parts.push('쪽지 ' + u.nn); if (u.nv) parts.push('목소리 ' + u.nv); if (u.nh) parts.push('♥ ' + u.nh);
     box.hidden = !parts.length;
     if (parts.length) box.textContent = '● ' + D.partner.name + '님의 새 소식 · ' + parts.join(' · ');
     $('twin').classList.toggle('hasnews', !!parts.length);
-    $('tbPhotos').classList.toggle('unread', !!(u.np + u.nh)); $('tbRoom').classList.toggle('unread', !!u.nn);
-    $('goPhotos').textContent = '사진함' + (u.np + u.nh ? ' ●' + (u.np + u.nh) : ''); $('goNotes').textContent = '쪽지함' + (u.nn ? ' ●' + u.nn : '');
+    $('tbPhotos').classList.toggle('unread', !!(u.np + u.nh)); $('tbRoom').classList.toggle('unread', !!(u.nn + u.nv));
+    $('goPhotos').textContent = '사진함' + (u.np + u.nh ? ' ●' + (u.np + u.nh) : ''); $('goNotes').textContent = '쪽지함' + (u.nn + u.nv ? ' ●' + (u.nn + u.nv) : '');
   }
   let prevU = null;
   function notifyArrivals() {
     const u = unread();
     if (prevU && D.partner) {
       const m = [];
-      if (u.np > prevU.np) m.push('새 사진'); if (u.nn > prevU.nn) m.push('새 쪽지'); if (u.nh > prevU.nh) m.push('내 사진에 하트 ♥');
+      if (u.np > prevU.np) m.push('새 사진'); if (u.nn > prevU.nn) m.push('새 쪽지'); if (u.nv > prevU.nv) m.push('목소리 쪽지'); if (u.nh > prevU.nh) m.push('내 사진에 하트 ♥');
       if (m.length) toast(D.partner.name + '님이 보냈어요 · ' + m.join(' · '));
     }
     prevU = u;
@@ -247,14 +251,15 @@
       let pt = (c.members || []).find(m => m.slot !== S.slot) || null;
       if (pt) pt = { ...pt, city: cleanCity(pt.city), profile: okProfile(pt.profile) ? pt.profile : null };
       const ph = (await api().listPhotos(S.code)).filter(p => okImg(p.data) && okDate(p.local_date)), nt = await api().listNotes(S.code);
-      const sig = (p2, ph2, nt2) => JSON.stringify([p2, ph2.map(p => p.id + ':' + (p.hearts || []).join('')), nt2.map(n => n.id)]);
-      const changed = sig(pt, ph, nt) !== sig(D.partner, D.photos, D.notes);
+      let vo = D.voices; try { vo = (await api().listVoices(S.code) || []).filter(v => v && /^audio\/[a-z0-9.+-]+$/.test(v.mime || '')); } catch (e) { }   // 목소리 쪽지 SQL 전이어도 나머지는 동작
+      const sig = (p2, ph2, nt2, vo2) => JSON.stringify([p2, ph2.map(p => p.id + ':' + (p.hearts || []).join('')), nt2.map(n => n.id), vo2.map(v => v.id)]);
+      const changed = sig(pt, ph, nt, vo) !== sig(D.partner, D.photos, D.notes, D.voices);
       const hadPt = !!D.partner;
       let rooms = D.rooms;   // 방은 서버에 아직 없어도(스키마 미적용) 나머지 기능이 멈추면 안 되므로 따로 받음
       try { const rl = await api().getRooms(S.code); rooms = { me: null, pt: null }; (rl || []).forEach(x => { if (x && (x.slot === 'a' || x.slot === 'b')) rooms[x.slot === S.slot ? 'me' : 'pt'] = Room.sanitize(x.room); }); } catch (e) { }
       const roomChanged = JSON.stringify(rooms) !== JSON.stringify(D.rooms);
       if (roomChanged && D.rooms.pt && rooms.pt && JSON.stringify(rooms.pt) !== JSON.stringify(D.rooms.pt) && pt && !$('v-room').classList.contains('on')) toast(pt.name + '님이 방을 꾸몄어요');
-      D = { partner: pt, photos: ph, notes: nt, rooms };
+      D = { partner: pt, photos: ph, notes: nt, voices: vo, rooms };
       notifyArrivals();
       if (roomChanged && !roomEditing) drawRoom();
       if (changed || !quiet) { paint(); if (!hadPt && pt) real(); drawPhotos(); drawNotesBox(); drawRoomNotes(); }
@@ -367,10 +372,48 @@
   }
   function drawNotesBox() {
     const box = $('noteList'); if (!box || !S) return;
-    const list = D.notes.filter(n => notesTab === 'in' ? n.slot !== S.slot : n.slot === S.slot);
+    const inTab = n => notesTab === 'in' ? n.slot !== S.slot : n.slot === S.slot;
+    const list = D.notes.filter(inTab).map(n => ({ ...n, kind: 'note' })).concat(D.voices.filter(inTab).map(v => ({ ...v, kind: 'voice' }))).sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
     $('tabIn').classList.toggle('on', notesTab === 'in'); $('tabOut').classList.toggle('on', notesTab === 'out');
-    box.innerHTML = list.length ? list.map(n => '<div class="nrow"><div class="nm2">' + esc(nameOf(n.slot)) + ' <span class="muted">· ' + when(n.created_at) + '</span></div><div>' + esc(n.body) + '</div></div>').join('') : '<div class="emptyhint" style="display:block">쪽지가 없어요.</div>';
+    box.textContent = '';
+    if (!list.length) { const e = document.createElement('div'); e.className = 'emptyhint'; e.style.display = 'block'; e.textContent = '쪽지가 없어요.'; box.appendChild(e); return; }
+    list.forEach(n => {
+      const row = document.createElement('div'); row.className = 'nrow' + (n.kind === 'voice' ? ' voice' : '');
+      const nm = document.createElement('div'); nm.className = 'nm2'; nm.textContent = nameOf(n.slot) + ' '; const sp = document.createElement('span'); sp.className = 'muted'; sp.textContent = '· ' + when(n.created_at); nm.appendChild(sp); row.appendChild(nm);
+      if (n.kind === 'note') { const t = document.createElement('div'); t.textContent = n.body; row.appendChild(t); }
+      else { const t = document.createElement('span'); t.textContent = '목소리 쪽지 · ' + Math.max(1, Math.round(Number(n.dur) || 0)) + '초'; const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.textContent = '▶ 재생'; b.onclick = () => playVoice(n.id, b); row.appendChild(t); row.appendChild(b); }
+      box.appendChild(row);
+    });
   }
+  /* ---------- 목소리 쪽지 ---------- */
+  let rec = null, playing = null, playBtn = null;
+  function paintRec(txt) { document.querySelectorAll('.recbtn').forEach(b => { b.textContent = txt || (b.closest('#v-notes') ? '● 목소리 쪽지 남기기' : '● 목소리'); b.classList.toggle('rec', !!rec); }); document.querySelectorAll('.recx').forEach(b => { b.hidden = !rec; }); }
+  async function toggleRec() {
+    if (!SSVoice.supported()) { toast('이 기기에서는 녹음을 쓸 수 없어요.'); return; }
+    if (rec) { finishRec(); return; }
+    try { rec = await SSVoice.start(sec => paintRec('■ 보내기 · ' + sec + '초'), () => finishRec()); paintRec('■ 보내기 · 0초'); }
+    catch (e) { rec = null; paintRec(); toast('마이크를 쓸 수 없어요. 브라우저의 마이크 권한을 확인해 주세요.'); }
+  }
+  async function finishRec() {
+    const r = rec; rec = null; paintRec(); if (!r) return;
+    try {
+      const v = await r.stop(); if (!v) return;
+      if (v.dur < 0.5) { toast('너무 짧아요. 조금 더 길게 말해 주세요.'); return; }
+      await api().addVoice(S.code, S.slot, v); toast('목소리 쪽지를 보냈어요'); await refresh(false);
+    } catch (e) { toast(explain(e)); }
+  }
+  async function playVoice(id, btn) {
+    if (playing) { playing.pause(); playing = null; if (playBtn) playBtn.textContent = '▶ 재생'; const same = playBtn === btn; playBtn = null; if (same) return; }
+    try {
+      const a = SSVoice.audioFrom(await api().getVoice(S.code, id)); if (!a) { toast('소리를 불러오지 못했어요.'); return; }
+      playing = a; playBtn = btn; btn.textContent = '■ 멈춤';
+      a.onended = () => { btn.textContent = '▶ 재생'; playing = null; playBtn = null; };
+      a.onerror = () => { btn.textContent = '▶ 재생'; playing = null; playBtn = null; toast('이 기기에서는 재생할 수 없는 소리 형식이에요.'); };
+      await a.play();
+    } catch (e) { btn.textContent = '▶ 재생'; playing = null; playBtn = null; if (e && e.name !== 'AbortError') toast('재생하지 못했어요.'); }
+  }
+  document.querySelectorAll('.recbtn').forEach(b => { b.onclick = toggleRec; });
+  document.querySelectorAll('.recx').forEach(b => { b.onclick = () => { if (rec) { rec.cancel(); rec = null; paintRec(); toast('녹음을 취소했어요'); } }; });
 
   /* ---------- 등록 화면 ---------- */
   let avTab = 'char';
@@ -585,6 +628,7 @@
       $('st-pt').addEventListener('click', e => heart($('st-pt'), e));
       started = true;
     }
+    if (S.mode === 'local') SSLive.stop(); else SSLive.start(S.code, () => poll());   // 상대가 바꾸면 신호로 바로 새로 받음
     $('editMe').hidden = false; $('demo').hidden = S.mode !== 'local'; $('codeBtn').hidden = S.mode === 'local';
     $('codeBtn').textContent = '코드 ' + S.code;
     showRegions(); view('v-home'); paint(); clock(); refresh(false).then(real);
@@ -710,7 +754,7 @@
     if (st && st === lastState) return; if (st) lastState = st;
     await refresh(true);
   }
-  setInterval(poll, 40000); document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+  setInterval(poll, 6000);   // 신호가 안 와도(연결 끊김 등) 6초마다 가볍게 확인 document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
   setInterval(() => { if (S) real(); }, 10 * 60 * 1000);
   Geo.COUNTRIES.forEach(c => { const o = document.createElement('option'); o.value = c.cc; o.textContent = c.name; $('country').appendChild(o); });
   if (S && S.me && S.me.city) S.me.city = cleanCity(S.me.city);

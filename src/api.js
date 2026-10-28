@@ -26,6 +26,9 @@
     heartPhoto: (code, id, slot) => rpc('ss_heart_photo', { p_code: code, p_photo_id: id, p_slot: slot, p_token: window.SSApi.token }),
     addNote: (code, slot, n) => rpc('ss_add_note', { p_code: code, p_slot: slot, p_body: n.body, p_x: n.x, p_y: n.y, p_token: window.SSApi.token }),
     listNotes: code => rpc('ss_list_notes', { p_code: code }),
+    addVoice: (code, slot, v) => rpc('ss_add_voice', { p_code: code, p_slot: slot, p_mime: v.mime, p_dur: v.dur, p_data: v.data, p_token: window.SSApi.token }),
+    listVoices: code => rpc('ss_list_voices', { p_code: code }),
+    getVoice: (code, id) => rpc('ss_get_voice', { p_code: code, p_id: id }),
     getRooms: code => rpc('ss_get_rooms', { p_code: code }),
     saveRoom: (code, slot, room) => rpc('ss_save_room', { p_code: code, p_slot: slot, p_room: room, p_token: window.SSApi.token })
   };
