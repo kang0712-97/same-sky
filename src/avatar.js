@@ -9,6 +9,7 @@
     accent: ['#c8463c', '#466ebe', '#ebc85a', '#509664', '#eb96b4', '#7d5aaa', '#f9ebdb', '#323237']
   };
   const INK = [31, 36, 32];
+  const CUT = 113;   // 머리·얼굴과 옷을 나누는 가로줄(목)
   let manifest = null, chars = [], headItems = [], patterns = []; const imgs = {}, cache = {};
   const hex = (r, g, b) => '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
   const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
@@ -20,7 +21,6 @@
     if (manifest) return chars;
     manifest = await (await fetch(BASE + 'manifest.json')).json();
     chars = manifest.characters; headItems = manifest.headItems; patterns = manifest.patterns;
-    if (window.SSMix) await SSMix.load().catch(() => {});
     await Promise.all(chars.map(c => c.builder ? null : new Promise(res => { const im = new Image(); im.onload = () => { imgs[c.id] = im; res(); }; im.onerror = res; im.src = BASE + c.file; })));
     return chars;
   }
@@ -35,7 +35,11 @@
 
   // avatar: { char, hair, top, bottom, hairStyle, head, glasses, scarf, accent, tpat, bpat }
   function render(av) {
-    if (av.mix && window.SSMix && SSMix.ready()) return SSMix.render(av);   // 파츠 조합 캐릭터
+    if (av.set) {   // 머리·얼굴과 옷을 목 위치(CUT)에서 나눠 서로 다른 캐릭터에서 가져온다
+      const c = document.createElement('canvas'), x = c.getContext('2d'), h = imgs[byId(av.set.head).id], o = imgs[byId(av.set.outfit).id]; c.width = o.width; c.height = o.height;
+      x.drawImage(o, 0, CUT, o.width, o.height - CUT, 0, CUT, o.width, o.height - CUT); x.drawImage(h, 0, 0, h.width, CUT, 0, 0, h.width, CUT); return c;
+    }
+    if (av.mix && window.SSMix && SSMix.ready()) return SSMix.render(av);   // (예전) 파츠 조합 캐릭터
     const ch = byId(av.char), im = ch.builder ? window.SSBuilder.build(av) : imgs[ch.id], an = ch.anchors || {};
     if (ch.v2) { const c0 = document.createElement('canvas'); c0.width = im.width; c0.height = im.height; c0.getContext('2d').drawImage(im, 0, 0); return c0; }   // 새 캐릭터는 완성된 그림 그대로
     const W = im.width, Hh = im.height;
@@ -201,7 +205,7 @@
     if (avatar.custom) return avatar.thumb;
     const k = JSON.stringify(avatar); if (hcache[k]) return hcache[k];
     const ch = byId(avatar.char); let bb;
-    if (avatar.mix) {   // 파츠 조합: 머리 중심 정사각형
+    if (avatar.mix || avatar.set) {   // 파츠·세트 조합: 머리 중심 정사각형
       const c = render(avatar), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, b = bbox(d, c.width, c.height), cx = Math.round((b.x0 + b.x1) / 2), o = document.createElement('canvas'); o.width = o.height = 48;
       const ox = o.getContext('2d'); ox.imageSmoothingEnabled = false; ox.drawImage(c, cx - 28, b.y0 - 2, 56, 56, 0, 0, 48, 48); return hcache[k] = o.toDataURL();
     }

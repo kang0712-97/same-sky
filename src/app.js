@@ -375,13 +375,13 @@
   /* ---------- 등록 화면 ---------- */
   let avTab = 'char';
   const AVTABS = [['char', '캐릭터'], ['hair', '머리'], ['face', '얼굴'], ['cloth', '옷'], ['item', '소품']];
-  const MIXTABS = [['char', '추천'], ['face', '얼굴'], ['hair', '머리'], ['cloth', '옷']];
+  const MIXTABS = [['char', '세트'], ['face', '머리·얼굴'], ['cloth', '옷']];   // 세트 = 완성 캐릭터, 머리·얼굴/옷은 서로 바꿔 끼움
   function renderSetupAvatar() {
-    const mixOk = SSMix.ready();
-    if (mixOk && !draft.avatar.mix && !draft.avatar.custom && avTab !== 'char') draft.avatar = SSMix.defaultMix();   // 탭에서 하나씩 고르면 직접 꾸미기로 전환
+    const mixOk = true;
+    if (!draft.avatar.custom && !draft.avatar.set && avTab !== 'char') { const cid = draft.avatar.mix ? 'g01' : Av.byId(draft.avatar.char).id; draft.avatar = { char: cid, set: { head: cid, outfit: cid } }; }   // 탭에서 고르면 머리·옷을 따로 바꾸는 상태로 전환로 전환
     const a = draft.avatar, tabs = $('avTabs'), panel = $('avPanel'); tabs.innerHTML = ''; panel.innerHTML = '';
     $('avPrev').src = Av.thumbUrl(a); $('avBig').src = Av.layerUrl(a);
-    const mix = !!a.mix && mixOk;   // 파츠로 직접 꾸미는 캐릭터
+    const mix = !!a.set;   // 머리·얼굴과 옷을 따로 고른 캐릭터
     const simple = !!a.custom || (!mixOk && Av.byId(a.char).v2);   // 내 사진 캐릭터는 고르기만
     if (simple) avTab = 'char';
     if (mixOk && !MIXTABS.some(t => t[0] === avTab)) avTab = 'char';
@@ -392,10 +392,11 @@
       b.setAttribute('aria-selected', avTab === id); b.onclick = () => { avTab = id; renderSetupAvatar(); }; tabs.appendChild(b);
     });
     const ch = a.custom ? null : Av.byId(a.char);
-    const part = (t, kind, none, thumb) => {   // 파츠 고르기 격자 (번호만 붙은 썸네일)
-      title(t); const g = grid();
-      if (none) cell(g, '없음', null, !a.mix[kind], () => { a.mix[kind] = null; });
-      SSMix.kinds(kind).forEach((e, i) => cell(g, String(i + 1), thumb({ ...a, mix: { ...a.mix, [kind]: e.id } }), a.mix[kind] === e.id, () => { a.mix[kind] = e.id; if (kind === 'top' || kind === 'bottom') a.mix.one = null; }));
+    const part = (key) => {   // 24종 후보 격자(여자·남자 구분): key = head | outfit
+      [['f', '여자'], ['m', '남자']].forEach(([grp, label]) => {
+        title(label); const g = grid();
+        Av.list().filter(c => c.group === grp).forEach((c, i) => cell(g, key === 'head' ? String(i + 1) : c.name, key === 'head' ? V({ ...a, set: { ...a.set, head: c.id } }) : Av.thumbUrl({ ...a, set: { ...a.set, outfit: c.id } }), a.set[key] === c.id, () => { a.set[key] = c.id; }));
+      });
     };
     const title = t => { const d = document.createElement('div'); d.className = 'cl'; d.textContent = t; panel.appendChild(d); };
     const grid = () => { const g = document.createElement('div'); g.className = 'ogrid'; panel.appendChild(g); return g; };
@@ -415,13 +416,9 @@
     const V = (o) => Av.headUrl({ ...a, ...o });
     const T = o => Av.thumbUrl(o);
     if (mix && avTab === 'face') {
-      title('피부색'); swatches('skin', '', Av.SWATCH.skin);
-      part('눈', 'eyes', false, V);
-    } else if (mix && avTab === 'hair') {
-      title('머리 색'); swatches('hc', '', Av.SWATCH.hair);
-      part('머리 모양', 'hair', false, V);
+      part('head');
     } else if (mix && avTab === 'cloth') {
-      part('상의', 'top', false, T); part('하의', 'bottom', false, T); part('원피스', 'one', true, T); part('신발', 'shoes', true, T);
+      part('outfit');
     } else if (avTab === 'char') {
       { const h = document.createElement('div'); h.className = 'hint'; h.textContent = mix ? '추천을 고르면 완성된 캐릭터로 바뀌어요. 지금 꾸민 모습은 취소 전까지 위 탭에서 다시 만들 수 있어요.' : '마음에 드는 캐릭터를 고르거나, 위 탭에서 하나씩 바꿔 보세요. (탭을 누르면 직접 꾸미기로 바뀌어요)'; panel.appendChild(h); }
       [['f', '여자'], ['m', '남자']].forEach(([grp, label]) => { title(label); const g = grid(); Av.list().filter(c => c.group === grp).forEach(c => cell(g, c.name, Av.thumbUrl({ char: c.id }), !a.custom && !a.mix && Av.byId(a.char).id === c.id, () => { draft.avatar = { char: c.id, hair: null, top: null, bottom: null }; })); });
