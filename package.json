@@ -1,0 +1,8 @@
+{
+  "name": "same-sky",
+  "private": true,
+  "description": "같은 하늘 — 정적 웹앱 + Vercel 서버 함수(api/)",
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}

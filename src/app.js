@@ -543,6 +543,26 @@
   $('openDress').onclick = () => { dressSnap = JSON.stringify(draft.avatar); avTab = 'char'; renderSetupAvatar(); view('v-dress'); };
   $('dressDone').onclick = () => { renderSetupAvatar(); view('v-setup'); };
   $('dressBack').onclick = () => { draft.avatar = JSON.parse(dressSnap); renderSetupAvatar(); view('v-setup'); };
+  /* ---------- 알림(푸시) ---------- */
+  const PUSH_TXT = {
+    noserver: '알림 기능이 아직 준비되지 않았어요.',
+    unsupported: '이 브라우저에서는 알림을 지원하지 않아요.',
+    install: 'iPhone은 먼저 Safari 공유 버튼(□↑) → "홈 화면에 추가"를 한 뒤, 홈 화면의 "같은 하늘" 아이콘으로 열어서 켜 주세요. (iOS 16.4 이상)',
+    denied: '브라우저에서 알림이 꺼져 있어요. 설정에서 이 사이트의 알림을 허용해 주세요.',
+    off: '상대가 사진·쪽지·목소리·하트를 보내면 잠금화면에 알림이 와요.',
+    on: '알림이 켜져 있어요. 상대가 보내면 알림이 와요.'
+  };
+  async function paintPush(isEdit) {
+    const box = $('pushBox'); box.hidden = !(isEdit && S && S.mode === 'remote'); if (box.hidden) return;
+    const st = await SSPush.state(); $('pushText').textContent = PUSH_TXT[st] || '';
+    const b = $('pushBtn'); b.hidden = !(st === 'off' || st === 'on'); b.textContent = st === 'on' ? '알림 끄기' : '알림 켜기'; b.dataset.st = st;
+  }
+  $('pushBtn').onclick = async () => {
+    const b = $('pushBtn'); b.disabled = true;
+    try { if (b.dataset.st === 'on') { await SSPush.disable(S.code, S.slot); toast('알림을 껐어요'); } else { await SSPush.enable(S.code, S.slot); toast('알림을 켰어요'); } }
+    catch (e) { toast(e && e.message === 'denied' ? '알림이 허용되지 않았어요.' : explain(e)); }
+    b.disabled = false; paintPush(true);
+  };
   function renderPicked() {
     const p = draft.place, cn = Geo.country(p.cc), el = $('picked');
     el.textContent = p.city ? '✓ ' + p.city.name + ' (' + cn.name + ')' : '도시를 입력하지 않으면 수도(' + cn.capital + ')로 설정돼요';
@@ -568,7 +588,7 @@
     $('name').value = me ? me.name : '';
     $('country').value = draft.place.cc; $('city').value = draft.place.city ? draft.place.city.name : ''; $('cities').innerHTML = '';
     $('setupTitle').textContent = isEdit ? '내 정보 수정' : '먼저 내 정보를 등록해요'; $('setupErr').textContent = ''; $('prev').hidden = true;
-    $('setupCancel').hidden = !isEdit; $('keyBtn').hidden = !(isEdit && S && S.mode === 'remote' && S.token); $('resetEdit').hidden = !isEdit; renderSetupAvatar(); renderPicked(); view('v-setup');
+    $('setupCancel').hidden = !isEdit; $('keyBtn').hidden = !(isEdit && S && S.mode === 'remote' && S.token); $('resetEdit').hidden = !isEdit; paintPush(isEdit); renderSetupAvatar(); renderPicked(); view('v-setup');
   }
   function submitSetup(e) {
     e.preventDefault();

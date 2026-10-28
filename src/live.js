@@ -32,6 +32,7 @@
   const A = window.SSApi;
   if (A) ['saveMember', 'addPhoto', 'heartPhoto', 'addNote', 'saveRoom', 'addVoice', 'markRead', 'deleteItem'].forEach(n => {
     const f = A[n]; if (typeof f !== 'function') return;
-    A[n] = async function () { const r = await f.apply(this, arguments); Live.ping(); return r; };
+    const kind = { addPhoto: 'photo', addNote: 'note', addVoice: 'voice', heartPhoto: 'heart' }[n];
+    A[n] = async function () { const r = await f.apply(this, arguments); Live.ping(); if (kind && window.SSPush) SSPush.notify(kind, arguments[0], n === 'heartPhoto' ? arguments[2] : arguments[1]); return r; };
   });
 })();

@@ -28,6 +28,8 @@
     listNotes: code => rpc('ss_list_notes', { p_code: code }),
     addVoice: (code, slot, v) => rpc('ss_add_voice', { p_code: code, p_slot: slot, p_mime: v.mime, p_dur: v.dur, p_data: v.data, p_x: v.x, p_y: v.y, p_token: window.SSApi.token }),
     listVoices: code => rpc('ss_list_voices', { p_code: code }),
+    savePush: (code, slot, sub) => rpc('ss_save_push', { p_code: code, p_slot: slot, p_token: window.SSApi.token, p_sub: sub }),
+    clearPush: (code, slot) => rpc('ss_clear_push', { p_code: code, p_slot: slot, p_token: window.SSApi.token }),
     deleteItem: (code, slot, id) => rpc('ss_delete_item', { p_code: code, p_slot: slot, p_token: window.SSApi.token, p_id: id }),
     markRead: (code, slot, ids) => rpc('ss_mark_read', { p_code: code, p_slot: slot, p_token: window.SSApi.token, p_ids: ids || null }),
     getVoice: (code, id) => rpc('ss_get_voice', { p_code: code, p_id: id }),

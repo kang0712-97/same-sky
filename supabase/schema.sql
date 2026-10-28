@@ -278,3 +278,44 @@ begin
   delete from ss_voices where id = p_id and code = upper(p_code) and slot = p_slot;
 end $$;
 grant execute on function ss_delete_item(text,text,text,uuid) to anon;
+
+-- ───────── 9차: 알림(웹 푸시) 구독 저장 ─────────
+-- 각자의 기기가 알림 구독 정보(endpoint+키)를 맡겨 두면, 상대가 무언가 보냈을 때 서버 함수(api/push)가 그 구독으로 알림을 보낸다.
+create table if not exists ss_push (
+  code text not null references ss_couples(code) on delete cascade,
+  slot text not null check (slot in ('a','b')),
+  sub jsonb not null,
+  updated_at timestamptz not null default now(),
+  primary key (code, slot)
+);
+alter table ss_push enable row level security;
+revoke all on ss_push from anon, authenticated;
+
+create or replace function ss_save_push(p_code text, p_slot text, p_token text, p_sub jsonb) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  perform ss_auth(p_code, p_slot, p_token);
+  if jsonb_typeof(p_sub) <> 'object' or length(p_sub::text) > 4000 then raise exception 'bad_sub'; end if;
+  if coalesce(p_sub->>'endpoint', '') !~ '^https://' or coalesce(p_sub->'keys'->>'p256dh', '') = '' or coalesce(p_sub->'keys'->>'auth', '') = '' then raise exception 'bad_sub'; end if;
+  insert into ss_push(code, slot, sub) values (upper(p_code), p_slot, p_sub)
+  on conflict (code, slot) do update set sub = excluded.sub, updated_at = now();
+end $$;
+
+create or replace function ss_clear_push(p_code text, p_slot text, p_token text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  perform ss_auth(p_code, p_slot, p_token);
+  delete from ss_push where code = upper(p_code) and slot = p_slot;
+end $$;
+
+-- 보낸 사람(토큰 확인됨)이 상대의 구독과 자기 이름을 받아 간다 (서버 함수가 알림을 만들 때 사용)
+create or replace function ss_partner_push(p_code text, p_slot text, p_token text) returns json
+language plpgsql security definer set search_path = public as $$
+declare r json;
+begin
+  perform ss_auth(p_code, p_slot, p_token);
+  select json_build_object('sub', p.sub, 'from', (select m.name from ss_members m where m.code = p.code and m.slot = p_slot)) into r
+  from ss_push p where p.code = upper(p_code) and p.slot <> p_slot;
+  return r;
+end $$;
+grant execute on function ss_save_push(text,text,text,jsonb), ss_clear_push(text,text,text), ss_partner_push(text,text,text) to anon;
