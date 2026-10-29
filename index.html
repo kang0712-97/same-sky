@@ -13,13 +13,11 @@
 <meta name="description" content="서로 다른 하늘 아래, 하나의 하루. 장거리 연애 커플을 위한 도트 일상 공유 서비스.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
 <link rel="stylesheet" href="src/style.css">
+<link rel="stylesheet" href="src/shell.css">
 </head>
 <body>
-<div class="title"><h1>SAME SKY</h1></div>
-
 <div class="desk" id="desk">
  <div class="ss">
-  <div class="bar"><span class="dot f"></span><span class="dot"></span><span class="dot"></span><span style="flex:1;text-align:center;letter-spacing:3px">SAME SKY</span><button class="mini" id="codeBtn" hidden>초대</button><button class="mini" id="editMe" hidden>내 정보</button><span style="font-size:13px" id="live">…</span></div>
 
   <!-- 1. 내 정보 등록 -->
   <div class="view" id="v-setup">
@@ -54,12 +52,25 @@
       <div class="picked" id="picked"></div>
      </div>
     </fieldset>
+    <fieldset id="setBox" hidden>
+     <legend>우리 정보</legend>
+     <div class="fld">연결 코드<div class="codeline"><b id="setCode"></b><button type="button" class="btn small" id="codeBtn">초대 링크 공유</button></div>
+      <span class="hint">상대에게 링크를 보내면 코드가 자동으로 입력돼요.</span></div>
+     <label class="fld">우리가 함께한 첫날<input type="date" id="ddStart" min="1990-01-01" max="2100-12-31"></label>
+     <label class="fld">다음에 만나는 날<input type="date" id="ddMeet" min="1990-01-01" max="2100-12-31"></label>
+     <div class="row2"><button type="button" class="btn small" id="ddClear">날짜 지우기</button><button type="button" class="btn p small" id="ddSave">날짜 저장</button></div>
+    </fieldset>
     <fieldset id="pushBox" hidden>
      <legend>알림</legend>
      <div class="hint" id="pushText"></div>
      <div class="row2"><button type="button" class="btn" id="pushBtn">알림 켜기</button></div>
     </fieldset>
-    <div class="row2"><button type="button" class="btn" id="keyBtn" hidden>기기 변경 열쇠 복사</button><button type="button" class="btn" id="resetEdit" hidden>이 기기 초기화</button><button type="button" class="btn" id="setupCancel" hidden>취소</button><button class="btn p" type="submit">다음</button></div>
+    <fieldset id="instBox" hidden>
+     <legend>앱으로 설치</legend>
+     <div class="hint" id="instText"></div>
+     <div class="row2"><button type="button" class="btn p" id="instBtn" hidden>앱으로 설치하기</button></div>
+    </fieldset>
+    <div class="row2 stack"><button type="button" class="btn" id="keyBtn" hidden>기기 변경 열쇠 복사</button><button type="button" class="btn" id="resetEdit" hidden>이 기기 초기화</button><button type="button" class="btn" id="setupCancel" hidden>취소</button><button class="btn p" type="submit">다음</button></div>
     <div class="err" id="setupErr"></div>
    </form>
   </div>
@@ -103,6 +114,7 @@
   <!-- 3. 홈 -->
   <div class="view" id="v-home">
    <div class="twin" id="twin">
+    <button class="gear" id="editMe" type="button" aria-label="설정" hidden>설정</button>
     <button class="news" id="news" type="button" hidden></button>
     <div class="badge" id="diff">시차</div>
     <div class="pane"><div id="st-me"></div><div class="plate"><div class="who"><img id="pf-me" class="pf" hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><div><b id="n-me">나</b><div class="sub"><img id="moonIcon" alt="" style="width:15px" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><span id="w-me"></span></div></div></div><div class="t" id="t-me">--:--</div></div></div>
@@ -110,16 +122,15 @@
      <div class="wait" id="wait" hidden><div>상대를 기다리는 중이에요</div><div>코드 <b id="waitCode"></b></div><button class="btn small" id="copyWait" type="button">초대 링크 보내기</button></div>
      <div class="plate"><div class="who"><img id="pf-pt" class="pf" hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><div><b id="n-pt">상대</b><div class="sub"><span id="w-pt"></span></div></div></div><div class="t" id="t-pt">--:--</div></div></div>
    </div>
+   <div class="dd" id="dd" hidden></div>
    <div class="strip" id="strip"></div>
    <div class="foot">
-    <canvas id="globe" width="81" height="81" style="width:130px;image-rendering:pixelated" aria-label="두 도시를 잇는 지구본"></canvas>
-    <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px">
-     <div style="font-size:13px;font-weight:bold" id="route"></div>
-     <div style="font-size:13px" id="moonTxt"></div>
-     <div class="btns big"><button class="btn p" id="goTown">▶ 상대 방 가기</button><button class="btn" id="photo">▣ 오늘의 사진 보내기 (0/3)</button></div>
-     <div class="btns"><button class="btn" id="goRoom">⌂ 내 방</button><button class="btn" id="goPhotos">사진함</button><button class="btn" id="goNotes">쪽지함</button></div>
-    </div>
+    <div class="fi"><canvas id="globe" width="81" height="81" style="width:96px;image-rendering:pixelated" aria-label="두 도시를 잇는 지구본"></canvas>
+     <div class="ft"><div id="route"></div><div id="moonTxt"></div></div></div>
+    <div class="btns big"><button class="btn p" id="photo">▣ 오늘의 사진 보내기 (0/3)</button><button class="btn" id="goTown" hidden>▶ 상대 방 가기</button></div>
+    <div class="btns" hidden><button class="btn" id="goRoom">⌂ 내 방</button><button class="btn" id="goPhotos">사진함</button><button class="btn" id="goNotes">쪽지함</button></div>
    </div>
+   <div class="inst" id="instBar" hidden><span>홈 화면에 추가하면 앱처럼 열려요.</span><button class="btn small" id="instMore" type="button">방법 보기</button><button class="mini" id="instX" type="button" aria-label="닫기">닫기</button></div>
   </div>
 
   <!-- 5. 사진함 -->
@@ -160,7 +171,7 @@
     <h3 id="mPhotoT">오늘의 사진 보내기</h3>
     <div class="btns"><label class="btn small">앨범에서 고르기<input id="pFile" type="file" accept="image/*" hidden></label><label class="btn small">카메라로 찍기<input id="pCam" type="file" accept="image/*" capture="environment" hidden></label></div>
     <img id="pPrev" class="pprev" hidden alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
-    <label class="inl"><input type="checkbox" id="pdot"> 도트 사진으로 보내기</label>
+    <label class="inl" hidden><input type="checkbox" id="pdot"></label>
     <input id="pCap" aria-label="사진에 붙일 한마디" maxlength="30" placeholder="한마디 (선택, 최대 30자)">
     <div class="row2"><button class="btn" id="pCancel" type="button">취소</button><button class="btn p" id="pSend" type="button" disabled>보내기</button></div>
     <div class="hint">하루 최대 3장까지 보낼 수 있어요.</div>
@@ -180,6 +191,14 @@
  <div class="rg"><span class="rl">나</span><select id="rg-country-me" aria-label="나의 나라"></select><input id="rg-city-me" placeholder="도시 (선택, 비우면 수도)" aria-label="나의 도시"><div class="cities" id="rg-list-me"></div></div>
  <div class="rg"><span class="rl">상대</span><select id="rg-country-pt" aria-label="상대의 나라"></select><input id="rg-city-pt" placeholder="도시 (선택, 비우면 수도)" aria-label="상대의 도시"><div class="cities" id="rg-list-pt"></div></div>
  <div class="rgsum" id="rg-sum"></div>
+</div>
+
+<div id="intro" role="button" tabindex="0" aria-label="시작하려면 누르세요">
+ <div class="st"><i style="left:12%;top:14%"></i><i style="left:78%;top:10%"></i><i style="left:30%;top:30%"></i><i style="left:88%;top:34%"></i><i style="left:8%;top:52%"></i><i style="left:62%;top:22%"></i><i style="left:46%;top:8%"></i></div>
+ <div class="moon" aria-hidden="true"></div>
+ <h1>같은 하늘</h1>
+ <p>서로 다른 하늘 아래, 하나의 하루</p>
+ <p class="tap">화면을 눌러 시작</p>
 </div>
 
 <nav class="tabbar" id="tabbar" aria-label="주요 화면">

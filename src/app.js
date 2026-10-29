@@ -16,7 +16,7 @@
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
   const saveL = () => { try { localStorage.setItem(LKEY, JSON.stringify(L)); } catch (e) { toast('저장 공간이 부족해요'); } };
   const W = { me: { kind: 'clear', temp: '-' }, pt: { kind: 'night', temp: '-' } };
-  let D = { partner: null, photos: [], notes: [], voices: [], rooms: { me: null, pt: null } };
+  let D = { partner: null, photos: [], notes: [], voices: [], dday: { start: '', meet: '' }, rooms: { me: null, pt: null } };
   const invite = (() => {   // 초대 링크(?code=XXXXXX)로 들어왔는지
     let c = ''; try { c = (new URLSearchParams(location.search).get('code') || '').trim().toUpperCase(); } catch (e) { }
     if (c) { try { history.replaceState(null, '', location.pathname); } catch (e) { } }
@@ -28,7 +28,8 @@
 
   /* ---------- 저장소: 서버(Supabase) 또는 이 기기(체험) ---------- */
   const localApi = {
-    async getCouple() { return { exists: true, members: [{ slot: S.slot, ...S.me }, S.demoPartner || DEMO_PARTNER] }; },
+    async getCouple() { return { exists: true, start: (L.dday || {}).start || null, meet: (L.dday || {}).meet || null, members: [{ slot: S.slot, ...S.me }, S.demoPartner || DEMO_PARTNER] }; },
+    async setDday(code, slot, d) { L.dday = { start: d.start || '', meet: d.meet || '' }; saveL(); },
     async saveMember() { },
     async addPhoto(code, slot, p) {
       if (L.photos.filter(x => x.slot === slot && x.local_date === p.date).length >= 3) { const e = new Error('limit'); e.code = 'limit'; throw e; }
@@ -80,7 +81,7 @@
     saveL();
   }
   function explain(e) {
-    if (e.code === 'no_config' || e.code === 'no_schema') return '서버 준비가 아직 안 됐어요. (관리자: supabase/schema.sql 을 Supabase에서 실행해야 해요) — 지금은 "혼자 체험하기"를 쓸 수 있어요.';
+    if (e.code === 'no_config' || e.code === 'no_schema') return '서버 설정이 아직 적용되지 않았어요. 관리자가 SQL을 실행하면 쓸 수 있어요.';
     if (e.code === 'forbidden') return '이 자리는 다른 기기가 쓰고 있어요. 원래 쓰던 기기의 "기기 변경 열쇠"가 필요해요.';
     if (e.code === 'limit') return '오늘 3장을 모두 보냈어요.';
     if (e.code === 'too_big') return '사진 용량이 너무 커요.';
@@ -267,10 +268,12 @@
       try { const rl = await api().getRooms(S.code); rooms = { me: null, pt: null }; (rl || []).forEach(x => { if (x && (x.slot === 'a' || x.slot === 'b')) rooms[x.slot === S.slot ? 'me' : 'pt'] = Room.sanitize(x.room); }); } catch (e) { }
       const roomChanged = JSON.stringify(rooms) !== JSON.stringify(D.rooms);
       if (roomChanged && D.rooms.pt && rooms.pt && JSON.stringify(rooms.pt) !== JSON.stringify(D.rooms.pt) && pt && !$('v-room').classList.contains('on')) toast(pt.name + '님이 방을 꾸몄어요');
-      D = { partner: pt, photos: ph, notes: nt, voices: vo, rooms };
+      const dd = { start: /^\d{4}-\d{2}-\d{2}$/.test(c.start || '') ? c.start : '', meet: /^\d{4}-\d{2}-\d{2}$/.test(c.meet || '') ? c.meet : '' };
+      if (JSON.stringify(dd) !== JSON.stringify(D.dday)) { D = { ...D, dday: dd }; paintDD(); }
+      D = { partner: pt, photos: ph, notes: nt, voices: vo, dday: dd, rooms };
       notifyArrivals();
       if (roomChanged && !roomEditing) drawRoom();
-      if (changed || !quiet) { paint(); if (!hadPt && pt) real(); drawPhotos(); drawNotesBox(); drawRoomNotes(); }
+      if (changed || !quiet) { paintDD(); paint(); if (!hadPt && pt) real(); drawPhotos(); drawNotesBox(); drawRoomNotes(); }
     } catch (e) { if (!quiet) toast(explain(e)); }
   }
 
@@ -543,6 +546,51 @@
   $('openDress').onclick = () => { dressSnap = JSON.stringify(draft.avatar); avTab = 'char'; renderSetupAvatar(); view('v-dress'); };
   $('dressDone').onclick = () => { renderSetupAvatar(); view('v-setup'); };
   $('dressBack').onclick = () => { draft.avatar = JSON.parse(dressSnap); renderSetupAvatar(); view('v-setup'); };
+  /* ---------- D-day ---------- */
+  const dayNum = k => Math.floor(Date.UTC(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10)) / 864e5);
+  function paintDD() {
+    const el = $('dd'); if (!el || !S || !S.me) return; const dd = D.dday || {}, t = dayNum(today()); el.textContent = '';
+    const chip = (txt, cls) => { const sp = document.createElement('span'); if (cls) sp.className = cls; sp.textContent = txt; el.appendChild(sp); };
+    if (dd.start) chip('함께한 지 ' + (t - dayNum(dd.start) + 1) + '일');
+    if (dd.meet) { const n = dayNum(dd.meet) - t; if (n === 0) chip('오늘 만나요!', 'meet'); else if (n > 0) chip('만날 때까지 D-' + n, 'meet'); }
+    el.hidden = !el.childNodes.length;
+  }
+  function paintSettings(isEdit) {   // 설정(내 정보 수정) 화면: 코드·초대 공유, D-day
+    const box = $('setBox'), on = !!(isEdit && S && S.mode === 'remote'); box.hidden = !isEdit || !S; if (box.hidden) return;
+    $('setCode').textContent = S.mode === 'remote' ? S.code : '(체험 중이라 코드가 없어요)'; $('codeBtn').hidden = !on;
+    $('ddStart').value = (D.dday || {}).start || ''; $('ddMeet').value = (D.dday || {}).meet || '';
+    paintInst(isEdit);
+  }
+  $('ddSave').onclick = async () => {
+    const d = { start: $('ddStart').value, meet: $('ddMeet').value };
+    try { await api().setDday(S.code, S.slot, d); D.dday = { start: d.start, meet: d.meet }; paintDD(); toast('날짜를 저장했어요'); await refresh(true); }
+    catch (e) { toast(explain(e)); }
+  };
+  $('ddClear').onclick = () => { $('ddStart').value = ''; $('ddMeet').value = ''; $('ddSave').onclick(); };
+
+  /* ---------- 앱으로 설치 ---------- */
+  let bip = null;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); bip = e; showInstBar(); paintInst($('setBox') && !$('setBox').hidden); });
+  window.addEventListener('appinstalled', () => { bip = null; $('instBar').hidden = true; paintInst(false); toast('앱으로 설치했어요'); });
+  const standaloneNow = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  function installHelp() {
+    const ua = navigator.userAgent;
+    if (/iPhone|iPad|iPod/.test(ua)) return 'Safari 아래의 공유 버튼(□↑)을 누르고 "홈 화면에 추가"를 고르세요. 홈 화면에 생긴 "같은 하늘" 아이콘으로 열면 앱처럼 쓸 수 있어요. (Safari에서 열어야 해요)';
+    if (/Android/.test(ua)) return '브라우저 오른쪽 위 메뉴(⋮)를 열고 "앱 설치" 또는 "홈 화면에 추가"를 고르세요. 삼성 인터넷은 메뉴(≡) → "현재 페이지 추가" → "홈 화면"이에요.';
+    return '주소창 오른쪽의 설치 아이콘을 누르거나, 브라우저 메뉴에서 "앱 설치"를 고르세요.';
+  }
+  function paintInst(isEdit) {
+    const box = $('instBox'); if (!box) return; box.hidden = !isEdit || standaloneNow();
+    if (box.hidden) return; $('instText').textContent = bip ? '버튼을 누르면 홈 화면에 앱이 설치돼요.' : installHelp(); $('instBtn').hidden = !bip;
+  }
+  function showInstBar() {
+    let off = false; try { off = localStorage.getItem('ss.instx') === '1'; } catch (e) { }
+    $('instBar').hidden = standaloneNow() || off || !(S && S.mode === 'remote');
+  }
+  $('instBtn').onclick = async () => { if (!bip) return; bip.prompt(); try { await bip.userChoice; } catch (e) { } bip = null; paintInst(true); };
+  $('instMore').onclick = () => { if (bip) { bip.prompt(); return; } openSetup(true); setTimeout(() => $('instBox').scrollIntoView({ block: 'center' }), 60); };
+  $('instX').onclick = () => { $('instBar').hidden = true; try { localStorage.setItem('ss.instx', '1'); } catch (e) { } };
+
   /* ---------- 알림(푸시) ---------- */
   const PUSH_TXT = {
     noserver: '알림 기능이 아직 준비되지 않았어요.',
@@ -588,7 +636,7 @@
     $('name').value = me ? me.name : '';
     $('country').value = draft.place.cc; $('city').value = draft.place.city ? draft.place.city.name : ''; $('cities').innerHTML = '';
     $('setupTitle').textContent = isEdit ? '내 정보 수정' : '먼저 내 정보를 등록해요'; $('setupErr').textContent = ''; $('prev').hidden = true;
-    $('setupCancel').hidden = !isEdit; $('keyBtn').hidden = !(isEdit && S && S.mode === 'remote' && S.token); $('resetEdit').hidden = !isEdit; paintPush(isEdit); renderSetupAvatar(); renderPicked(); view('v-setup');
+    $('setupCancel').hidden = !isEdit; $('keyBtn').hidden = !(isEdit && S && S.mode === 'remote' && S.token); $('resetEdit').hidden = !isEdit; paintPush(isEdit); paintSettings(isEdit); renderSetupAvatar(); renderPicked(); view('v-setup');
   }
   function submitSetup(e) {
     e.preventDefault();
@@ -703,8 +751,8 @@
       started = true;
     }
     if (S.mode === 'local') SSLive.stop(); else SSLive.start(S.code, () => poll());   // 상대가 바꾸면 신호로 바로 새로 받음
-    $('editMe').hidden = false; $('demo').hidden = S.mode !== 'local'; $('codeBtn').hidden = S.mode === 'local';
-    $('codeBtn').textContent = '코드 ' + S.code;
+    $('editMe').hidden = false; $('demo').hidden = S.mode !== 'local';
+    showInstBar(); paintDD();
     showRegions(); view('v-home'); paint(); clock(); refresh(false).then(real);
   }
 
@@ -817,6 +865,15 @@
   const tabState = t => t.setAttribute('aria-pressed', t.classList.contains('on') ? 'true' : 'false');
   document.querySelectorAll('.tabs .tab').forEach(tabState);
   new MutationObserver(ms => ms.forEach(m => { if (m.target.matches && m.target.matches('.tab')) tabState(m.target); })).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
+
+  /* ---------- 인트로: 앱을 열 때 한 번 ---------- */
+  (function () {
+    const el = $('intro'); if (!el) return; let seen = false;
+    try { seen = sessionStorage.getItem('ss.intro') === '1'; sessionStorage.setItem('ss.intro', '1'); } catch (e) { }
+    if (seen) { el.remove(); return; }
+    const close = () => { el.classList.add('out'); setTimeout(() => el.remove(), 500); };
+    el.onclick = close; el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') close(); }; setTimeout(close, 2800);
+  })();
 
   /* ---------- 시작 ---------- */
   Globe.attach($('globe')); initRegions(); buildPalette();

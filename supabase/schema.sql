@@ -319,3 +319,40 @@ begin
   return r;
 end $$;
 grant execute on function ss_save_push(text,text,text,jsonb), ss_clear_push(text,text,text), ss_partner_push(text,text,text) to anon;
+
+-- ───────── 10차: D-day (둘이 함께 보는 사귄 날 · 다음에 만나는 날) ─────────
+alter table ss_couples add column if not exists start_date date;
+alter table ss_couples add column if not exists meet_date date;
+
+create or replace function ss_get_couple(p_code text) returns json
+language sql security definer set search_path = public as $$
+  select case when exists (select 1 from ss_couples where code = upper(p_code)) then
+    json_build_object('exists', true,
+      'start', (select start_date::text from ss_couples where code = upper(p_code)),
+      'meet',  (select meet_date::text  from ss_couples where code = upper(p_code)),
+      'members', coalesce((select json_agg(json_build_object('slot', slot, 'name', name, 'avatar', avatar, 'city', city, 'profile', profile)) from ss_members where code = upper(p_code)), '[]'::json))
+  else json_build_object('exists', false, 'members', '[]'::json) end;
+$$;
+
+create or replace function ss_set_dday(p_code text, p_slot text, p_token text, p_start date, p_meet date) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  perform ss_auth(p_code, p_slot, p_token);
+  if p_start is not null and p_start not between date '1990-01-01' and date '2100-12-31' then raise exception 'bad_date'; end if;
+  if p_meet  is not null and p_meet  not between date '1990-01-01' and date '2100-12-31' then raise exception 'bad_date'; end if;
+  update ss_couples set start_date = p_start, meet_date = p_meet where code = upper(p_code);
+end $$;
+grant execute on function ss_get_couple(text), ss_set_dday(text,text,text,date,date) to anon;
+
+-- 변경 감지에 D-day 포함
+create or replace function ss_state(p_code text) returns json
+language sql security definer set search_path = public as $$
+  select json_build_object(
+    'members', (select coalesce(max(updated_at)::text, '') from ss_members where code = upper(p_code)),
+    'photos',  (select count(*)::text || coalesce(sum(cardinality(hearts))::text, '0') || coalesce(max(taken_at)::text, '') from ss_photos where code = upper(p_code)),
+    'notes',   (select count(*)::text || coalesce(max(created_at)::text, '') || coalesce(max(read_at)::text, '') from ss_notes where code = upper(p_code)),
+    'rooms',   (select coalesce(max(updated_at)::text, '') from ss_rooms where code = upper(p_code)),
+    'voices',  (select count(*)::text || coalesce(max(created_at)::text, '') || coalesce(max(read_at)::text, '') from ss_voices where code = upper(p_code)),
+    'dday',    (select coalesce(start_date::text, '') || '|' || coalesce(meet_date::text, '') from ss_couples where code = upper(p_code)));
+$$;
+grant execute on function ss_state(text) to anon;

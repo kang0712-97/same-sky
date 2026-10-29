@@ -30,6 +30,7 @@
     listVoices: code => rpc('ss_list_voices', { p_code: code }),
     savePush: (code, slot, sub) => rpc('ss_save_push', { p_code: code, p_slot: slot, p_token: window.SSApi.token, p_sub: sub }),
     clearPush: (code, slot) => rpc('ss_clear_push', { p_code: code, p_slot: slot, p_token: window.SSApi.token }),
+    setDday: (code, slot, d) => rpc('ss_set_dday', { p_code: code, p_slot: slot, p_token: window.SSApi.token, p_start: d.start || null, p_meet: d.meet || null }),
     deleteItem: (code, slot, id) => rpc('ss_delete_item', { p_code: code, p_slot: slot, p_token: window.SSApi.token, p_id: id }),
     markRead: (code, slot, ids) => rpc('ss_mark_read', { p_code: code, p_slot: slot, p_token: window.SSApi.token, p_ids: ids || null }),
     getVoice: (code, id) => rpc('ss_get_voice', { p_code: code, p_id: id }),

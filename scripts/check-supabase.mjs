@@ -17,6 +17,7 @@ const checks = [
   ['목소리 쪽지·읽음 표시 (ss_add_voice / ss_mark_read)  ← 6·7차 SQL', async () => { const a = await rpc('ss_list_voices', { p_code: Z }); const b = await rpc('ss_add_voice', { p_code: Z, p_slot: 'a', p_mime: 'audio/webm', p_dur: 1, p_data: 'x', p_x: 1, p_y: 1, p_token: 'x' }); const c = await rpc('ss_mark_read', { p_code: Z, p_slot: 'a', p_token: 'x', p_ids: null }); return a.ok && !missing(b.msg) && !missing(c.msg); }],
   ['보낸 쪽지 삭제 (ss_delete_item)  ← 8차 SQL', async () => { const r = await rpc('ss_delete_item', { p_code: Z, p_slot: 'a', p_token: 'x', p_id: U }); return !missing(r.msg); }],
   ['알림 구독 (ss_save_push / ss_partner_push)  ← 9차 SQL', async () => { const a = await rpc('ss_save_push', { p_code: Z, p_slot: 'a', p_token: 'x', p_sub: {} }); const b = await rpc('ss_partner_push', { p_code: Z, p_slot: 'a', p_token: 'x' }); return !missing(a.msg) && !missing(b.msg); }],
+  ['D-day (ss_set_dday)  ← 10차 SQL', async () => { const r = await rpc('ss_set_dday', { p_code: Z, p_slot: 'a', p_token: 'x', p_start: null, p_meet: null }); return !missing(r.msg); }],
   ['옛 우회로 제거 (토큰 없는 ss_add_note 없어야 함)  ← 5차 SQL', async () => { const r = await rpc('ss_add_note', { p_code: Z, p_slot: 'a', p_body: 'x', p_x: 1, p_y: 1 }); return missing(r.msg); }],
 ];
 let allOk = true;
